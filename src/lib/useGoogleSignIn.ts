@@ -1,6 +1,6 @@
 import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { useState } from "react";
-import { auth } from "./firebase";
+import { getFirebaseAuth } from "./firebase";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
 
@@ -12,6 +12,7 @@ export function useGoogleSignIn() {
     setError("");
     setLoading(true);
     try {
+      const auth = getFirebaseAuth();
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
       const idToken = await result.user.getIdToken();
@@ -35,10 +36,7 @@ export function useGoogleSignIn() {
 
       return json.data;
     } catch (err: unknown) {
-      // User closed the popup — don't show an error
-      if (err instanceof Error && err.message.includes("popup-closed-by-user")) {
-        return null;
-      }
+      if (err instanceof Error && err.message.includes("popup-closed-by-user")) return null;
       const msg = err instanceof Error ? err.message : "Google sign-in failed. Please try again.";
       setError(msg);
       return null;
