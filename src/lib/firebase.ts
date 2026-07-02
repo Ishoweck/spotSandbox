@@ -1,5 +1,5 @@
-import { initializeApp, getApps, FirebaseApp } from "firebase/app";
-import { getAuth, Auth } from "firebase/auth";
+import { initializeApp, getApps } from "firebase/app";
+import { getAuth } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -11,22 +11,13 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
-let app: FirebaseApp;
-let auth: Auth;
-
-if (typeof window !== "undefined") {
-  app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
-  auth = getAuth(app);
-}
-
-export { auth };
-export default app!;
+const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+export const auth = getAuth(app);
+export default app;
 
 export async function getFirebaseAnalytics() {
   if (typeof window === "undefined") return null;
   const { getAnalytics, isSupported } = await import("firebase/analytics");
-  if (await isSupported()) {
-    return getAnalytics(app);
-  }
+  if (await isSupported()) return getAnalytics(app);
   return null;
 }
