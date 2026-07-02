@@ -267,6 +267,16 @@ function ShareButton() {
   );
 }
 
+/* ─── Nigerian States ────────────────────────────────────────────────────────── */
+
+const NIGERIAN_STATES = [
+  "Abia", "Adamawa", "Akwa Ibom", "Anambra", "Bauchi", "Bayelsa", "Benue",
+  "Borno", "Cross River", "Delta", "Ebonyi", "Edo", "Ekiti", "Enugu",
+  "FCT — Abuja", "Gombe", "Imo", "Jigawa", "Kaduna", "Kano", "Katsina",
+  "Kebbi", "Kogi", "Kwara", "Lagos", "Nasarawa", "Niger", "Ogun", "Ondo",
+  "Osun", "Oyo", "Plateau", "Rivers", "Sokoto", "Taraba", "Yobe", "Zamfara",
+];
+
 /* ─── Modal ─────────────────────────────────────────────────────────────────── */
 
 type AmbassadorType = "student" | "state" | "";
@@ -451,15 +461,29 @@ function ApplyModal({ preselected, onClose }: { preselected: AmbassadorType; onC
                     <input type="tel" value={form.phone} onChange={set("phone")} placeholder="+234 800 000 0000" className={inputCls} />
                   </div>
                   <div>
-                    <label className={labelCls}>{type === "student" ? "University *" : "State / City *"}</label>
-                    <input
-                      required
-                      type="text"
-                      value={form.location}
-                      onChange={set("location")}
-                      placeholder={type === "student" ? "e.g. UNILAG" : "e.g. Rivers State"}
-                      className={inputCls}
-                    />
+                    <label className={labelCls}>{type === "student" ? "University *" : "State *"}</label>
+                    {type === "state" ? (
+                      <select
+                        required
+                        value={form.location}
+                        onChange={(e) => setForm((f) => ({ ...f, location: e.target.value }))}
+                        className={inputCls}
+                      >
+                        <option value="" disabled>Select your state…</option>
+                        {NIGERIAN_STATES.map((s) => (
+                          <option key={s} value={s}>{s}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      <input
+                        required
+                        type="text"
+                        value={form.location}
+                        onChange={set("location")}
+                        placeholder="e.g. UNILAG"
+                        className={inputCls}
+                      />
+                    )}
                   </div>
                 </div>
 
@@ -516,59 +540,180 @@ export default function AmbassadorPage() {
 
         {/* Hero */}
         <section
-          className="pt-28 sm:pt-36 pb-20 sm:pb-28 px-6 text-center relative overflow-hidden"
+          className="pt-24 sm:pt-32 pb-0 relative overflow-hidden"
           style={{ backgroundColor: "#d7004b" }}
         >
-          <div className="absolute top-0 right-0 w-[560px] h-[560px] pointer-events-none"
-            style={{ background: "radial-gradient(circle, rgba(255,255,255,0.09) 0%, transparent 65%)", transform: "translate(30%,-30%)" }} />
-          <div className="absolute bottom-0 left-0 w-96 h-96 pointer-events-none"
-            style={{ background: "radial-gradient(circle, rgba(255,255,255,0.06) 0%, transparent 70%)", transform: "translate(-30%,30%)" }} />
+          {/* decorative blobs */}
+          <div className="absolute top-0 right-0 w-[600px] h-[600px] pointer-events-none"
+            style={{ background: "radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 65%)", transform: "translate(30%,-30%)" }} />
+          <div className="absolute bottom-0 left-0 w-80 h-80 pointer-events-none"
+            style={{ background: "radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%)", transform: "translate(-30%,30%)" }} />
+          {/* dot pattern */}
+          <div className="absolute inset-0 pointer-events-none opacity-10"
+            style={{ backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.6) 1px, transparent 1px)", backgroundSize: "32px 32px" }} />
 
-          <div className="relative z-10 max-w-2xl mx-auto">
-            <motion.span variants={fadeUp} initial="hidden" animate="visible"
-              className="inline-flex items-center gap-2 bg-white/15 text-white text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full mb-6">
-              <span className="w-1.5 h-1.5 rounded-full bg-accent inline-block" />
-              Ambassador Program
-            </motion.span>
+          <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-8 lg:px-10">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:gap-14 pb-10 sm:pb-16">
 
-            <motion.h1 variants={fadeUp} initial="hidden" animate="visible" transition={{ delay: 0.08 }}
-              className="text-3xl sm:text-5xl md:text-6xl font-extrabold text-white leading-[1.1] tracking-tight mb-5">
-              Represent Vendorspot.<br className="hidden sm:block" />
-              <span className="text-accent"> Earn while you grow.</span>
-            </motion.h1>
+              {/* ── Left: copy ── */}
+              <div className="flex-1 text-center lg:text-left mb-8 sm:mb-12 lg:mb-0">
+                <motion.span variants={fadeUp} initial="hidden" animate="visible"
+                  className="inline-flex items-center gap-2 bg-white/15 border border-white/20 text-white text-[11px] font-bold uppercase tracking-widest px-4 py-1.5 rounded-full mb-5 sm:mb-6">
+                  <span className="w-1.5 h-1.5 rounded-full bg-accent inline-block animate-pulse" />
+                  Ambassador Program
+                </motion.span>
 
-            <motion.p variants={fadeUp} initial="hidden" animate="visible" transition={{ delay: 0.15 }}
-              className="text-white/65 text-sm sm:text-base max-w-lg mx-auto leading-relaxed mb-8">
-              Whether you&apos;re a student on campus or a community leader across your state — Vendorspot&apos;s Ambassador Program turns your influence into income. Share your referral link, bring vendors and buyers on board, and earn commissions with no earning cap and zero upfront cost. Africa&apos;s most trusted marketplace is growing fast, and you can grow with it.
-            </motion.p>
+                <motion.h1 variants={fadeUp} initial="hidden" animate="visible" transition={{ delay: 0.08 }}
+                  className="text-3xl sm:text-5xl md:text-6xl font-extrabold text-white leading-[1.08] tracking-tight mb-4 sm:mb-5">
+                  Represent<br />Vendorspot.<br />
+                  <span className="text-accent">Earn while you grow.</span>
+                </motion.h1>
 
-            <motion.div variants={fadeUp} initial="hidden" animate="visible" transition={{ delay: 0.22 }}
-              className="flex flex-col sm:flex-row items-center justify-center gap-3">
-              <button
-                onClick={() => setModal("student")}
-                className="flex items-center gap-2 bg-white text-primary text-sm font-bold px-7 py-3.5 rounded-full hover:bg-white/90 transition-all shadow-lg shadow-black/20"
-              >
-                <FiBookOpen className="w-4 h-4" />
-                Student Ambassador
-              </button>
-              <button
-                onClick={() => setModal("state")}
-                className="flex items-center gap-2 bg-accent hover:bg-accent-dark text-dark text-sm font-bold px-7 py-3.5 rounded-full transition-all shadow-lg shadow-black/20"
-              >
-                <FiMapPin className="w-4 h-4" />
-                State Ambassador
-              </button>
-            </motion.div>
+                <motion.p variants={fadeUp} initial="hidden" animate="visible" transition={{ delay: 0.15 }}
+                  className="text-white/65 text-sm sm:text-base max-w-sm sm:max-w-md mx-auto lg:mx-0 leading-relaxed mb-6 sm:mb-8">
+                  Turn your influence into income — whether you&apos;re a student on campus or a community leader in your state. No cost to join. No cap on earnings.
+                </motion.p>
 
-            <motion.div variants={fadeUp} initial="hidden" animate="visible" transition={{ delay: 0.28 }}
-              className="flex items-center justify-center gap-4 mt-5">
-              <a href="#programs"
-                className="text-white/50 hover:text-white/75 text-xs font-medium transition-colors underline underline-offset-4">
-                Learn about each program
-              </a>
-              <span className="w-px h-3 bg-white/20" />
-              <ShareButton />
-            </motion.div>
+                <motion.div variants={fadeUp} initial="hidden" animate="visible" transition={{ delay: 0.22 }}
+                  className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center lg:justify-start gap-3 mb-5">
+                  <button
+                    onClick={() => setModal("student")}
+                    className="flex items-center justify-center gap-2 bg-white text-primary text-sm font-bold px-6 sm:px-7 py-3.5 rounded-full hover:bg-white/90 transition-all shadow-lg shadow-black/20"
+                  >
+                    <FiBookOpen className="w-4 h-4" />
+                    Student Ambassador
+                  </button>
+                  <button
+                    onClick={() => setModal("state")}
+                    className="flex items-center justify-center gap-2 bg-white/20 hover:bg-white/30 border border-white/30 text-white text-sm font-bold px-6 sm:px-7 py-3.5 rounded-full transition-all shadow-lg shadow-black/20"
+                  >
+                    <FiMapPin className="w-4 h-4" />
+                    State Ambassador
+                  </button>
+                </motion.div>
+
+                <motion.div variants={fadeUp} initial="hidden" animate="visible" transition={{ delay: 0.28 }}
+                  className="flex items-center justify-center lg:justify-start gap-4">
+                  <a href="#programs"
+                    className="text-white/50 hover:text-white/75 text-xs font-medium transition-colors underline underline-offset-4">
+                    Learn about each program
+                  </a>
+                  <span className="w-px h-3 bg-white/20" />
+                  <ShareButton />
+                </motion.div>
+              </div>
+
+              {/* ── Right: program cards ── */}
+              <div className="flex flex-col gap-3 sm:gap-4 lg:w-[400px] lg:shrink-0">
+
+                {/* Student card */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                  className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl sm:rounded-3xl cursor-pointer group hover:bg-white/15 transition-colors"
+                  onClick={() => setModal("student")}
+                >
+                  {/* Mobile: horizontal strip */}
+                  <div className="flex items-center gap-3 p-4 sm:hidden">
+                    <div className="w-10 h-10 rounded-xl bg-violet-400/30 border border-violet-300/30 flex items-center justify-center shrink-0">
+                      <FiBookOpen className="w-4 h-4 text-white" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2 mb-0.5">
+                        <p className="text-white font-bold text-sm leading-snug">Student Ambassador</p>
+                        <span className="text-[9px] font-bold text-white/50 bg-white/10 px-2 py-0.5 rounded-full whitespace-nowrap shrink-0">Campus</span>
+                      </div>
+                      <p className="text-white/55 text-xs">Earn on every campus referral. No cap.</p>
+                    </div>
+                    <FiArrowRight className="w-4 h-4 text-white/40 group-hover:text-white/70 group-hover:translate-x-0.5 transition-all shrink-0" />
+                  </div>
+                  {/* Desktop: full card */}
+                  <div className="hidden sm:block p-6">
+                    <div className="flex items-start gap-4">
+                      <div className="w-11 h-11 rounded-2xl bg-violet-400/30 border border-violet-300/30 flex items-center justify-center shrink-0">
+                        <FiBookOpen className="w-5 h-5 text-white" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2 mb-1">
+                          <p className="text-white font-bold text-base">Student Ambassador</p>
+                          <span className="text-[10px] font-bold text-white/50 bg-white/10 px-2 py-0.5 rounded-full whitespace-nowrap">Campus</span>
+                        </div>
+                        <p className="text-white/60 text-xs leading-relaxed mb-3">
+                          Represent Vendorspot on your campus. Earn on every referral — classmates, staff, anyone.
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {["Commission per referral", "Campus rep title", "Monthly bonuses"].map((t) => (
+                            <span key={t} className="text-[10px] font-semibold text-white/70 bg-white/10 px-2.5 py-1 rounded-full">{t}</span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="mt-4 flex items-center justify-end gap-1 text-white/50 group-hover:text-white/80 transition-colors text-xs font-semibold">
+                      Apply now <FiArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                    </div>
+                  </div>
+                </motion.div>
+
+                {/* State card — white/glass, brighter than student */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                  className="bg-white/20 backdrop-blur-sm border border-white/40 rounded-2xl sm:rounded-3xl cursor-pointer group hover:bg-white/28 transition-colors"
+                  onClick={() => setModal("state")}
+                >
+                  {/* Mobile: horizontal strip */}
+                  <div className="flex items-center gap-3 p-4 sm:hidden">
+                    <div className="w-10 h-10 rounded-xl bg-white/25 border border-white/30 flex items-center justify-center shrink-0">
+                      <FiMapPin className="w-4 h-4 text-white" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2 mb-0.5">
+                        <p className="text-white font-bold text-sm leading-snug">State Ambassador</p>
+                        <span className="text-[9px] font-bold text-white/70 bg-white/20 px-2 py-0.5 rounded-full whitespace-nowrap shrink-0">Top Tier</span>
+                      </div>
+                      <p className="text-white/55 text-xs">Highest commission tier. Lead your state.</p>
+                    </div>
+                    <FiArrowRight className="w-4 h-4 text-white/40 group-hover:text-white/70 group-hover:translate-x-0.5 transition-all shrink-0" />
+                  </div>
+                  {/* Desktop: full card */}
+                  <div className="hidden sm:block p-6">
+                    <div className="flex items-start gap-4">
+                      <div className="w-11 h-11 rounded-2xl bg-white/25 border border-white/30 flex items-center justify-center shrink-0">
+                        <FiMapPin className="w-5 h-5 text-white" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2 mb-1">
+                          <p className="text-white font-bold text-base">State Ambassador</p>
+                          <span className="text-[10px] font-bold text-white/70 bg-white/20 px-2 py-0.5 rounded-full whitespace-nowrap">Top Tier</span>
+                        </div>
+                        <p className="text-white/60 text-xs leading-relaxed mb-3">
+                          Lead your state&apos;s growth. Get the highest commission tier plus your own ambassador dashboard.
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {["Highest commissions", "Dedicated dashboard", "State-level features"].map((t) => (
+                            <span key={t} className="text-[10px] font-semibold text-white/70 bg-white/15 px-2.5 py-1 rounded-full">{t}</span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="mt-4 flex items-center justify-end gap-1 text-white/50 group-hover:text-white/80 transition-colors text-xs font-semibold">
+                      Apply now <FiArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                    </div>
+                  </div>
+                </motion.div>
+
+              </div>
+
+            </div>
+          </div>
+
+          {/* wave transition */}
+          <div className="relative h-10 sm:h-14 overflow-hidden">
+            <svg viewBox="0 0 1440 56" preserveAspectRatio="none" className="absolute inset-0 w-full h-full" fill="#111827">
+              <path d="M0,0 C360,56 1080,56 1440,0 L1440,56 L0,56 Z" />
+            </svg>
           </div>
         </section>
 

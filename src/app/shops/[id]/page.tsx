@@ -32,6 +32,7 @@ interface VendorDetail {
   isFollowing: boolean;
   storefront?: { primaryColor?: string };
   location?: string;
+  businessAddress?: { city?: string; state?: string; country?: string; street?: string };
 }
 
 interface Product {
@@ -55,7 +56,12 @@ export default function ShopDetailPage() {
   const [followersCount, setFollowersCount] = useState(0);
   const [followLoading, setFollowLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [isMobileDevice, setIsMobileDevice] = useState(false);
   const { toast } = useToast();
+
+  useEffect(() => {
+    setIsMobileDevice(/android|iphone|ipad|ipod/i.test(navigator.userAgent));
+  }, []);
 
   useEffect(() => {
     if (!id) return;
@@ -185,19 +191,21 @@ export default function ShopDetailPage() {
     <>
       <Navbar />
       <main className="bg-gray-50 min-h-screen pt-12 sm:pt-16 pb-16">
-        {/* Open in App Banner */}
-        <div className="bg-[#CC3366] text-white px-4 py-3 mt-6 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <img src="/VLogo.svg" alt="Vendorspot" className="w-7 h-7 rounded" />
-            <span className="text-sm font-medium">View this store in the Vendorspot app</span>
+        {/* Open in App Banner — mobile/tablet only */}
+        {isMobileDevice && (
+          <div className="bg-[#CC3366] text-white px-4 py-3 mt-6 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <img src="/VLogo.svg" alt="Vendorspot" className="w-7 h-7 rounded" />
+              <span className="text-sm font-medium">View this store in the Vendorspot app</span>
+            </div>
+            <button
+              onClick={openInApp}
+              className="bg-white text-[#CC3366] text-xs font-bold px-4 py-1.5 rounded-full whitespace-nowrap"
+            >
+              Open App
+            </button>
           </div>
-          <button
-            onClick={openInApp}
-            className="bg-white text-[#CC3366] text-xs font-bold px-4 py-1.5 rounded-full whitespace-nowrap"
-          >
-            Open App
-          </button>
-        </div>
+        )}
 
         {/* ── Banner ── */}
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="relative h-32 sm:h-40 w-full bg-gradient-to-r from-gray-200 to-gray-300 overflow-hidden">
@@ -232,17 +240,15 @@ export default function ShopDetailPage() {
                   <h1 className="text-lg sm:text-xl font-bold text-dark leading-tight">
                     {vendor.businessName}
                   </h1>
-                  {(vendor.isPremium || vendor.verificationStatus === "verified") && (
+                  {vendor.isPremium && (
                     <Image
                       src="/icons/verify.svg"
-                      alt={vendor.isPremium ? "Premium" : "Verified"}
+                      alt="Premium"
                       width={18}
                       height={18}
                       style={{
                         width: 18, height: 18, flexShrink: 0,
-                        filter: vendor.isPremium
-                          ? "brightness(0) saturate(100%) invert(38%) sepia(93%) saturate(1500%) hue-rotate(199deg) brightness(101%) contrast(102%)"
-                          : "brightness(0) saturate(100%) invert(75%) sepia(68%) saturate(1250%) hue-rotate(5deg) brightness(101%) contrast(102%)"
+                        filter: "brightness(0) saturate(100%) invert(38%) sepia(93%) saturate(1500%) hue-rotate(199deg) brightness(101%) contrast(102%)",
                       }}
                     />
                   )}
@@ -259,10 +265,13 @@ export default function ShopDetailPage() {
                     <span>{followersCount} {followersCount === 1 ? "follower" : "followers"}</span>
                   )}
                   {vendor.totalSales > 0 && <span>{vendor.totalSales} sales</span>}
-                  {vendor.location && (
+                  {(vendor.businessAddress?.city || vendor.businessAddress?.state || vendor.location) && (
                     <div className="flex items-center gap-1">
-                      <FiMapPin className="w-3 h-3 flex-shrink-0" />
-                      <span>{vendor.location}</span>
+                      <FiMapPin className="w-3 h-3 shrink-0" />
+                      <span>
+                        {[vendor.businessAddress?.city, vendor.businessAddress?.state]
+                          .filter(Boolean).join(", ") || vendor.location}
+                      </span>
                     </div>
                   )}
                 </div>

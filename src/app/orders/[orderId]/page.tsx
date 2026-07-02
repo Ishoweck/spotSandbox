@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
+import FooterMini from "@/components/FooterMini";
 import {
   FiCheck, FiPackage, FiMapPin, FiChevronRight, FiDownload,
   FiTruck, FiClock, FiAlertCircle, FiShoppingBag, FiXCircle, FiCheckCircle,
@@ -249,7 +249,7 @@ export default function OrderPage() {
             </div>
           </div>
         </main>
-        <Footer />
+        <FooterMini />
       </>
     );
   }
@@ -281,7 +281,7 @@ export default function OrderPage() {
             </div>
           </div>
         </main>
-        <Footer />
+        <FooterMini />
       </>
     );
   }
@@ -318,7 +318,7 @@ export default function OrderPage() {
             </div>
           </div>
         </main>
-        <Footer />
+        <FooterMini />
       </>
     );
   }
@@ -570,7 +570,7 @@ export default function OrderPage() {
           </div>
         </div>
       </main>
-      <Footer />
+      <FooterMini />
     </>
   );
 }

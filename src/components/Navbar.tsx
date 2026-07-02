@@ -102,7 +102,7 @@ export default function Navbar() {
 
           {/* Logo */}
           <Link href="/home" className="shrink-0 bg-white rounded-full px-3 py-1.5 sm:px-4 sm:py-2 border border-gray-100 shadow-sm">
-            <Image src="/VLogo.svg" alt="Vendorspot" width={120} height={20} className="h-4 sm:h-5 w-auto" style={{ width: "auto" }} />
+            <Image src="/VLogo.svg" alt="Vendorspot" width={120} height={20} className="h-4 sm:h-5 w-auto" style={{ width: "auto" }} priority />
           </Link>
 
           {/* Desktop nav pill */}

@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
+import FooterMini from "@/components/FooterMini";
 import { useCart } from "@/lib/CartContext";
 import { useToast } from "@/components/Toast";
 import { FiMapPin, FiTag, FiTruck, FiChevronRight, FiCheck, FiPlus, FiCreditCard, FiLoader, FiPackage, FiAlertCircle, FiShield, FiX } from "react-icons/fi";
@@ -739,7 +739,7 @@ export default function CheckoutPage() {
           )}
         </div>
       </main>
-      <Footer />
+      <FooterMini />
 
       {/* Buyer Protection Info Modal */}
       {showProtectionInfo && (

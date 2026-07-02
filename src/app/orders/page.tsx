@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
+import FooterMini from "@/components/FooterMini";
 import { FiPackage, FiChevronRight, FiLoader, FiArrowRight } from "react-icons/fi";
 import { fadeUp, stagger } from "@/lib/motion";
 
@@ -137,7 +137,7 @@ export default function OrdersPage() {
           </AnimatePresence>
         </div>
       </main>
-      <Footer />
+      <FooterMini />
     </>
   );
 }

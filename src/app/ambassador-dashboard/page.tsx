@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
+import FooterMini from "@/components/FooterMini";
 import { fadeUp } from "@/lib/motion";
 import {
   FiCopy, FiCheck, FiTrendingUp, FiUsers, FiDollarSign,
@@ -299,7 +299,7 @@ export default function AmbassadorDashboard() {
             <p className="text-sm text-gray-400">Loading your dashboard…</p>
           </div>
         </main>
-        <Footer />
+        <FooterMini />
       </>
     );
   }
@@ -332,7 +332,7 @@ export default function AmbassadorDashboard() {
             </Link>
           </div>
         </main>
-        <Footer />
+        <FooterMini />
       </>
     );
   }
@@ -553,7 +553,7 @@ export default function AmbassadorDashboard() {
           </motion.div>
         </div>
       </main>
-      <Footer />
+      <FooterMini />
     </>
   );
 }

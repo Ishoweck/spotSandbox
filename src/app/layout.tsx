@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { CartProvider } from "@/lib/CartContext";
@@ -12,6 +12,10 @@ const inter = Inter({
 });
 
 const BASE_URL = "https://vendorspotng.com";
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+};
 
 export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),

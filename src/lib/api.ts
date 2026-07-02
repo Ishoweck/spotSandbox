@@ -109,6 +109,7 @@ export interface VendorProfile {
   userAvatar: string;
   coverImage: string;
   location: string;
+  businessAddress?: { city?: string; state?: string; country?: string; street?: string };
   rating: number;
   reviews: number;
   totalSales: number;

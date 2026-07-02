@@ -25,11 +25,12 @@ interface ProductCardProps {
   emoji?: string;
   images?: string[];
   slug?: string;
+  priority?: boolean;
   [key: string]: unknown;
 }
 
 export default function ProductCard(props: ProductCardProps) {
-  const { id, _id, name, price, slug, images, emoji, color = "bg-gray-100" } = props;
+  const { id, _id, name, price, slug, images, emoji, color = "bg-gray-100", priority = false } = props;
 
   // API returns different field names depending on which endpoint was hit
   const oldPrice = props.oldPrice || props.compareAtPrice || 0;
@@ -64,6 +65,7 @@ export default function ProductCard(props: ProductCardProps) {
     <motion.div
       whileHover={{ y: -3 }}
       transition={{ duration: 0.22 }}
+      className="h-full"
     >
       <Link
         href={href}
@@ -86,6 +88,7 @@ export default function ProductCard(props: ProductCardProps) {
               src={productImage}
               alt={name}
               fill
+              priority={priority}
               className="object-cover group-hover:scale-105 transition-transform duration-300"
               sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 25vw"
             />

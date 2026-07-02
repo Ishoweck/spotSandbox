@@ -8,11 +8,19 @@ import Link from "next/link";
 import Image from "next/image";
 import {
   FiSearch, FiMapPin, FiShare2,
-  FiUserPlus, FiX, FiCheck, FiShoppingBag, FiArrowRight,
+  FiUserPlus, FiX, FiCheck, FiShoppingBag, FiArrowRight, FiFilter, FiChevronDown,
 } from "react-icons/fi";
 import { useApi } from "@/lib/useApi";
 import type { VendorProfile } from "@/lib/api";
 import { useToast } from "@/components/Toast";
+
+const NIGERIAN_STATES = [
+  "Abia","Adamawa","Akwa Ibom","Anambra","Bauchi","Bayelsa","Benue","Borno",
+  "Cross River","Delta","Ebonyi","Edo","Ekiti","Enugu","FCT — Abuja","Gombe",
+  "Imo","Jigawa","Kaduna","Kano","Katsina","Kebbi","Kogi","Kwara","Lagos",
+  "Nasarawa","Niger","Ogun","Ondo","Osun","Oyo","Plateau","Rivers","Sokoto",
+  "Taraba","Yobe","Zamfara",
+];
 
 /* ─── palette ─── */
 const COVER_GRADIENTS = [
@@ -165,17 +173,15 @@ function ShopCard({ shop, index, compact = false }: { shop: VendorProfile; index
         {/* name + badge */}
         <div className="flex items-center gap-1 mb-0.5">
           <p className={`font-bold text-gray-900 truncate leading-snug ${compact ? "text-[11px]" : "text-sm"}`}>{shop.name}</p>
-          {(shop.isPremium || shop.verified) && (
+          {shop.isPremium && (
             <Image
               src="/icons/verify.svg"
-              alt={shop.isPremium ? "Premium" : "Verified"}
+              alt="Premium"
               width={14}
               height={14}
               style={{
                 width: 14, height: 14, flexShrink: 0,
-                filter: shop.isPremium
-                  ? "brightness(0) saturate(100%) invert(38%) sepia(93%) saturate(1500%) hue-rotate(199deg) brightness(101%) contrast(102%)"
-                  : "brightness(0) saturate(100%) invert(75%) sepia(68%) saturate(1250%) hue-rotate(5deg) brightness(101%) contrast(102%)"
+                filter: "brightness(0) saturate(100%) invert(38%) sepia(93%) saturate(1500%) hue-rotate(199deg) brightness(101%) contrast(102%)",
               }}
             />
           )}
@@ -185,7 +191,9 @@ function ShopCard({ shop, index, compact = false }: { shop: VendorProfile; index
         {!compact && (
           <div className="flex items-center gap-1 text-[11px] text-gray-400 mb-2">
             <FiMapPin className="w-2.5 h-2.5 flex-shrink-0" />
-            <span className="truncate">{shop.location || "Lagos, Nigeria"}</span>
+            <span className="truncate">
+              {[shop.businessAddress?.city, shop.businessAddress?.state].filter(Boolean).join(", ") || shop.location || "Nigeria"}
+            </span>
           </div>
         )}
 
@@ -219,6 +227,9 @@ export default function ShopsPage() {
   const [isMobile, setIsMobile] = useState(false);
   const [page, setPage] = useState(1);
   const [gridSize, setGridSize] = useState<"comfortable" | "compact">("comfortable");
+  const [selectedState, setSelectedState] = useState("");
+  const [filterOpen, setFilterOpen] = useState(false);
+  const filterRef = useRef<HTMLDivElement>(null);
   const gridRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -234,7 +245,17 @@ export default function ShopsPage() {
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
   }, [search]);
 
-  useEffect(() => { setPage(1); }, [debouncedQ]);
+  useEffect(() => { setPage(1); }, [debouncedQ, selectedState]);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (filterRef.current && !filterRef.current.contains(e.target as Node)) {
+        setFilterOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   // Top sellers arc — always uses /vendor/top
   const { data: topVendors, loading: topLoading } = useApi<VendorProfile[]>("/vendor/top");
@@ -265,7 +286,22 @@ export default function ShopsPage() {
     return [...primary, ...fallback].slice(0, 6);
   }, [topVendors, vendors]);
 
-  const allShops = vendors || [];
+  const allShops = useMemo(() => {
+    const base = vendors || [];
+    if (!selectedState) return base;
+    // Normalize: lowercase, strip " State" suffix, strip " — Abuja" / "- abuja" variants
+    const norm = (v: string) =>
+      v.toLowerCase()
+        .replace(/\s+state$/i, "")
+        .replace(/\s*[—–-]+\s*\w+$/i, "")
+        .trim();
+    const needle = norm(selectedState);
+    return base.filter((s) => {
+      const raw = norm(s.businessAddress?.state || s.location || "");
+      return raw === needle || raw.includes(needle) || needle.includes(raw);
+    });
+  }, [vendors, selectedState]);
+
   const totalPages = Math.ceil(allShops.length / PAGE_SIZE);
   const pageShops = allShops.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
@@ -339,6 +375,34 @@ export default function ShopsPage() {
             </motion.div>
           </div>
         </section>
+
+        {/* Trust ticker */}
+        {(() => {
+          const single = 'Verified Vendors Only — We verify every vendor so you can shop with peace of mind.';
+          const items = Array.from({ length: 12 }, () => single);
+          return (
+            <div className="overflow-hidden py-3 border-y border-white/20" style={{ background: '#d7004b' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  width: 'max-content',
+                  animation: 'ticker 120s linear infinite',
+                }}
+              >
+                {[...items, ...items].map((text, i) => (
+                  <span
+                    key={i}
+                    className="inline-flex items-center shrink-0 text-white text-xs sm:text-sm font-semibold"
+                    style={{ paddingLeft: '3rem', paddingRight: '3rem' }}
+                  >
+                    {text}
+                    <span className="ml-12 text-white/30">✦</span>
+                  </span>
+                ))}
+              </div>
+            </div>
+          );
+        })()}
 
         {/* ── Top Sellers arc ── */}
         <AnimatePresence>
@@ -425,18 +489,16 @@ export default function ShopsPage() {
                         </span>
                       )}
 
-                      {(vendor.isPremium || vendor.verified) && (
+                      {vendor.isPremium && (
                         <span className="absolute -bottom-1 -right-1 w-5 h-5 sm:w-6 sm:h-6 rounded-full border-2 border-white shadow-sm bg-white flex items-center justify-center">
                           <Image
                             src="/icons/verify.svg"
-                            alt={vendor.isPremium ? "Premium" : "Verified"}
+                            alt="Premium"
                             width={20}
                             height={20}
                             style={{
                               width: 20, height: 20,
-                              filter: vendor.isPremium
-                                ? "brightness(0) saturate(100%) invert(38%) sepia(93%) saturate(1500%) hue-rotate(199deg) brightness(101%) contrast(102%)"
-                                : "brightness(0) saturate(100%) invert(75%) sepia(68%) saturate(1250%) hue-rotate(5deg) brightness(101%) contrast(102%)"
+                              filter: "brightness(0) saturate(100%) invert(38%) sepia(93%) saturate(1500%) hue-rotate(199deg) brightness(101%) contrast(102%)",
                             }}
                           />
                         </span>
@@ -475,10 +537,10 @@ export default function ShopsPage() {
                     )}
                   </span>
                 ) : (
-                  <span className=" mb-3">
-                    All Shops
-                    {(vendors || []).length > 0 && !loading && (
-                      <span className="text-base font-normal text-gray-400 ml-2">({vendors?.length})</span>
+                  <span className="mb-3">
+                    {selectedState ? `Shops in ${selectedState}` : "All Shops"}
+                    {allShops.length > 0 && !loading && (
+                      <span className="text-base font-normal text-gray-400 ml-2">({allShops.length})</span>
                     )}
                   </span>
                 )}
@@ -492,6 +554,52 @@ export default function ShopsPage() {
                     <FiX className="w-3.5 h-3.5" /> Clear
                   </button>
                 )}
+
+                {/* state filter */}
+                <div className="relative" ref={filterRef}>
+                  <button
+                    onClick={() => setFilterOpen((v) => !v)}
+                    className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl border transition-all ${
+                      selectedState
+                        ? "bg-primary text-white border-primary"
+                        : "bg-white text-gray-600 border-gray-200 hover:border-gray-300 hover:text-gray-900"
+                    }`}
+                  >
+                    <FiFilter className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">{selectedState || "Filter by State"}</span>
+                    <span className="sm:hidden">{selectedState || "State"}</span>
+                    <FiChevronDown className={`w-3 h-3 transition-transform ${filterOpen ? "rotate-180" : ""}`} />
+                  </button>
+
+                  {filterOpen && (
+                    <div className="absolute right-0 top-full mt-2 w-52 bg-white border border-gray-100 rounded-2xl shadow-xl z-50 overflow-hidden">
+                      <div className="max-h-72 overflow-y-auto py-1">
+                        <button
+                          onClick={() => { setSelectedState(""); setFilterOpen(false); }}
+                          className={`w-full text-left px-4 py-2.5 text-xs font-semibold transition-colors ${
+                            !selectedState ? "text-primary bg-primary/5" : "text-gray-500 hover:bg-gray-50"
+                          }`}
+                        >
+                          All States
+                        </button>
+                        {NIGERIAN_STATES.map((state) => (
+                          <button
+                            key={state}
+                            onClick={() => { setSelectedState(state); setFilterOpen(false); }}
+                            className={`w-full text-left px-4 py-2.5 text-xs transition-colors ${
+                              selectedState === state
+                                ? "text-primary bg-primary/5 font-semibold"
+                                : "text-gray-700 hover:bg-gray-50 font-medium"
+                            }`}
+                          >
+                            {state}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
                 {/* grid size toggle */}
                 <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-xl p-1">
                   <button
@@ -530,7 +638,7 @@ export default function ShopsPage() {
                 >
                   {Array.from({ length: 8 }, (_, i) => <ShopSkeleton key={i} />)}
                 </motion.div>
-              ) : !vendors || vendors.length === 0 ? (
+              ) : allShops.length === 0 ? (
                 <motion.div
                   key="empty"
                   initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
@@ -540,14 +648,18 @@ export default function ShopsPage() {
                     <FiShoppingBag className="w-7 h-7 text-gray-400" />
                   </div>
                   <p className="text-base font-bold text-gray-800 mb-1">
-                    {isSearching ? "No shops found" : "No shops yet"}
+                    {isSearching ? "No shops found" : selectedState ? `No shops in ${selectedState}` : "No shops yet"}
                   </p>
                   <p className="text-sm text-gray-400 mb-6 max-w-xs">
-                    {isSearching ? `Nothing matched "${debouncedQ}". Try something different.` : "Check back soon — vendors are joining daily."}
+                    {isSearching
+                      ? `Nothing matched "${debouncedQ}". Try something different.`
+                      : selectedState
+                      ? "Try a different state or browse all shops."
+                      : "Check back soon — vendors are joining daily."}
                   </p>
-                  {isSearching && (
+                  {(isSearching || selectedState) && (
                     <button
-                      onClick={clearSearch}
+                      onClick={() => { clearSearch(); setSelectedState(""); }}
                       className="bg-gray-900 text-white text-sm font-bold px-6 py-2.5 rounded-2xl hover:bg-gray-700 transition-colors"
                     >
                       Browse All Shops
@@ -556,7 +668,7 @@ export default function ShopsPage() {
                 </motion.div>
               ) : (
                 <motion.div
-                  key={`grid-${debouncedQ}-${page}`}
+                  key={`grid-${debouncedQ}-${selectedState}-${page}`}
                   initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                   transition={{ duration: 0.2 }}
                   className={`grid gap-2 sm:gap-3 ${

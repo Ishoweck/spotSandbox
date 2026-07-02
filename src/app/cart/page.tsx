@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
+import FooterMini from "@/components/FooterMini";
 import { useCart } from "@/lib/CartContext";
 import { FiMinus, FiPlus, FiTag, FiLock, FiShoppingBag, FiArrowRight, FiTrash2, FiPackage } from "react-icons/fi";
 import { fadeUp, stagger } from "@/lib/motion";
@@ -45,27 +45,20 @@ export default function CartPage() {
       <Navbar />
       <main className="flex-1 bg-gray-50 min-h-screen pt-20 sm:pt-24 pb-6 sm:pb-8 px-4">
         <div className="max-w-6xl mx-auto">
-          <motion.h1
-            variants={fadeUp}
-            initial="hidden"
-            animate="visible"
-            className="text-xl sm:text-2xl font-bold text-dark mb-6"
-          >
-            Your Cart {itemCount > 0 && <span className="text-base font-normal text-gray-500 ml-1">({itemCount} {itemCount === 1 ? "item" : "items"})</span>}
-          </motion.h1>
-
           <AnimatePresence mode="wait">
             {cart.items.length === 0 ? (
               <motion.div
                 key="empty"
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 sm:p-16 text-center"
+                className="flex flex-col items-center justify-center min-h-[calc(100vh-160px)] text-center"
               >
-                <FiShoppingBag className="w-12 h-12 text-gray-200 mx-auto mb-4" />
-                <p className="text-lg sm:text-xl font-semibold text-dark mb-2">Your cart is empty</p>
-                <p className="text-gray-500 text-sm mb-6">Browse our products and add something you like.</p>
-                <Link href="/products" className="inline-flex items-center gap-2 bg-primary text-white rounded-xl px-6 py-3 text-sm font-semibold hover:bg-primary-dark transition-colors">
+                <div className="w-20 h-20 rounded-2xl bg-white border border-gray-100 shadow-sm flex items-center justify-center mb-6">
+                  <FiShoppingBag className="w-9 h-9 text-gray-300" />
+                </div>
+                <p className="text-xl sm:text-2xl font-bold text-dark mb-2">Your cart is empty</p>
+                <p className="text-gray-400 text-sm mb-8 max-w-xs">Browse our products and add something you like.</p>
+                <Link href="/products" className="inline-flex items-center gap-2 bg-primary text-white rounded-xl px-7 py-3.5 text-sm font-semibold hover:bg-primary-dark transition-colors shadow-sm">
                   Browse Products <FiArrowRight className="w-4 h-4" />
                 </Link>
               </motion.div>
@@ -74,8 +67,19 @@ export default function CartPage() {
                 key="cart"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="grid grid-cols-1 lg:grid-cols-3 gap-5 sm:gap-6"
               >
+                <motion.h1
+                  variants={fadeUp}
+                  initial="hidden"
+                  animate="visible"
+                  className="text-xl sm:text-2xl font-bold text-dark mb-6"
+                >
+                  Your Cart{" "}
+                  <span className="text-base font-normal text-gray-400 ml-1">
+                    ({itemCount} {itemCount === 1 ? "item" : "items"})
+                  </span>
+                </motion.h1>
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 sm:gap-6">
                 {/* Cart items */}
                 <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm p-5 sm:p-6">
                   <motion.div
@@ -216,12 +220,13 @@ export default function CartPage() {
                     </motion.button>
                   </div>
                 </motion.div>
+              </div>
               </motion.div>
             )}
           </AnimatePresence>
         </div>
       </main>
-      <Footer />
+      <FooterMini />
     </>
   );
 }
