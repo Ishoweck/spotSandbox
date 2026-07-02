@@ -7,6 +7,14 @@ const nextConfig: NextConfig = {
       { protocol: "http",  hostname: "**" },
     ],
   },
+  async rewrites() {
+    return [
+      {
+        source: "/__/auth/:path*",
+        destination: "https://vendorspot-58147.firebaseapp.com/__/auth/:path*",
+      },
+    ];
+  },
   async headers() {
     return [
       {

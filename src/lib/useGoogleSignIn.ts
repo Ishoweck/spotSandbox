@@ -36,7 +36,10 @@ export function useGoogleSignIn() {
 
       return json.data;
     } catch (err: unknown) {
-      if (err instanceof Error && err.message.includes("popup-closed-by-user")) return null;
+      const code = (err as { code?: string }).code ?? "";
+      if (code === "auth/popup-closed-by-user" || code === "auth/cancelled-popup-request") {
+        return null;
+      }
       const msg = err instanceof Error ? err.message : "Google sign-in failed. Please try again.";
       setError(msg);
       return null;
