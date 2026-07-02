@@ -5,14 +5,22 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
+import FooterMini from "@/components/FooterMini";
 import { fadeUp } from "@/lib/motion";
 import {
   FiMail, FiLock, FiPackage, FiTrash2, FiCheck,
-  FiAlertCircle, FiEye, FiEyeOff, FiLogOut, FiChevronRight, FiUser,
+  FiAlertCircle, FiEye, FiEyeOff, FiLogOut, FiChevronRight, FiUser, FiMapPin,
 } from "react-icons/fi";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
+
+const NIGERIAN_STATES = [
+  "Abia","Adamawa","Akwa Ibom","Anambra","Bauchi","Bayelsa","Benue","Borno",
+  "Cross River","Delta","Ebonyi","Edo","Ekiti","Enugu","FCT — Abuja","Gombe",
+  "Imo","Jigawa","Kaduna","Kano","Katsina","Kebbi","Kogi","Kwara","Lagos",
+  "Nasarawa","Niger","Ogun","Ondo","Osun","Oyo","Plateau","Rivers","Sokoto",
+  "Taraba","Yobe","Zamfara",
+];
 
 interface StoredUser {
   id?: string;
@@ -21,6 +29,7 @@ interface StoredUser {
   email?: string;
   avatar?: string;
   role?: string;
+  location?: string;
 }
 
 function getToken() {
@@ -38,6 +47,7 @@ export default function AccountPage() {
   /* Profile */
   const [firstName, setFirstName]   = useState("");
   const [lastName, setLastName]     = useState("");
+  const [location, setLocation]     = useState("");
   const [profileMsg, setProfileMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [profileLoading, setProfileLoading] = useState(false);
 
@@ -60,6 +70,7 @@ export default function AccountPage() {
         setUser(u);
         setFirstName(u.firstName || "");
         setLastName(u.lastName || "");
+        setLocation(u.location || "");
       } catch {}
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -72,11 +83,11 @@ export default function AccountPage() {
       const res = await fetch(`${API_BASE}/auth/profile`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${getToken()}` },
-        body: JSON.stringify({ firstName, lastName }),
+        body: JSON.stringify({ firstName, lastName, location }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.message || "Update failed.");
-      const updated = { ...user, firstName, lastName };
+      const updated = { ...user, firstName, lastName, location };
       localStorage.setItem("vendorspot_user", JSON.stringify(updated));
       setUser(updated);
       setProfileMsg({ ok: true, text: "Profile updated successfully." });
@@ -152,6 +163,12 @@ export default function AccountPage() {
             className="text-sm text-white/55 flex items-center justify-center gap-1.5">
             <FiMail className="w-3.5 h-3.5" />{user.email}
           </motion.p>
+          {user.location && (
+            <motion.p variants={fadeUp} initial="hidden" animate="visible" transition={{ delay: 0.15 }}
+              className="text-xs text-white/40 flex items-center justify-center gap-1 mt-1">
+              <FiMapPin className="w-3 h-3" />{user.location}
+            </motion.p>
+          )}
           <motion.button variants={fadeUp} initial="hidden" animate="visible" transition={{ delay: 0.17 }}
             onClick={handleLogout}
             className="mt-5 inline-flex items-center gap-1.5 text-xs font-semibold text-white/40 hover:text-white/70 transition-colors">
@@ -209,6 +226,21 @@ export default function AccountPage() {
                   <input disabled type="email" value={user.email || ""}
                     className={`${inputCls} !bg-gray-50 text-gray-400 cursor-not-allowed`} />
                   <p className="text-[11px] text-gray-400 mt-1 ml-0.5">Email cannot be changed.</p>
+                </div>
+                <div>
+                  <label className={labelCls}>
+                    <span className="flex items-center gap-1.5"><FiMapPin className="w-3 h-3" /> State / Location</span>
+                  </label>
+                  <select
+                    value={location}
+                    onChange={(e) => setLocation(e.target.value)}
+                    className={inputCls}
+                  >
+                    <option value="">Select your state…</option>
+                    {NIGERIAN_STATES.map((s) => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </select>
                 </div>
                 {profileMsg && <Feedback ok={profileMsg.ok} text={profileMsg.text} />}
                 <button type="submit" disabled={profileLoading}
@@ -282,7 +314,7 @@ export default function AccountPage() {
 
         </div>
       </main>
-      <Footer />
+      <FooterMini />
     </>
   );
 }

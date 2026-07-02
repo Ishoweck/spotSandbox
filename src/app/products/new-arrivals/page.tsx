@@ -11,7 +11,7 @@ import { usePagedApi } from "@/lib/useApi";
 import { fadeUp, stagger } from "@/lib/motion";
 import type { Product } from "@/lib/api";
 
-const PAGE_SIZE = 16;
+const PAGE_SIZE = 20;
 
 function ProductSkeleton() {
   return (
@@ -32,41 +32,48 @@ function Pagination({ page, totalPages, onChange }: { page: number; totalPages: 
   const visible = pages.filter(p => p === 1 || p === totalPages || Math.abs(p - page) <= 1);
 
   return (
-    <div className="flex items-center justify-center gap-1.5 mt-10">
-      <button
-        onClick={() => onChange(page - 1)}
-        disabled={page === 1}
-        className="w-9 h-9 flex items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-      >
-        <FiChevronLeft className="w-4 h-4" />
-      </button>
+    <div className="flex flex-col items-center gap-3 mt-12">
+      <p className="text-xs text-gray-400 font-medium tracking-wide">Page {page} of {totalPages}</p>
+      <div className="flex items-center gap-1">
+        <button
+          onClick={() => onChange(page - 1)}
+          disabled={page === 1}
+          className="flex items-center gap-1.5 h-9 px-4 rounded-full border border-gray-200 bg-white text-gray-500 text-xs font-semibold hover:border-gray-300 hover:text-dark disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+        >
+          <FiChevronLeft className="w-3.5 h-3.5" /> Prev
+        </button>
 
-      {visible.map((p, i) => {
-        const prev = visible[i - 1];
-        return (
-          <span key={p} className="flex items-center gap-1.5">
-            {prev && p - prev > 1 && <span className="text-gray-400 text-sm px-1">…</span>}
-            <button
-              onClick={() => onChange(p)}
-              className={`w-9 h-9 rounded-xl text-sm font-semibold transition-colors ${
-                p === page
-                  ? "bg-primary text-white shadow-sm"
-                  : "border border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
-              }`}
-            >
-              {p}
-            </button>
-          </span>
-        );
-      })}
+        <div className="flex items-center gap-0.5 mx-2">
+          {visible.map((p, i) => {
+            const prev = visible[i - 1];
+            return (
+              <span key={p} className="flex items-center">
+                {prev && p - prev > 1 && (
+                  <span className="w-8 flex items-center justify-center text-gray-300 text-sm select-none">···</span>
+                )}
+                <button
+                  onClick={() => onChange(p)}
+                  className={`w-9 h-9 rounded-full text-sm font-bold transition-all duration-200 ${
+                    p === page
+                      ? "bg-primary text-white shadow-md shadow-primary/30 scale-110"
+                      : "text-gray-400 hover:bg-gray-100 hover:text-dark"
+                  }`}
+                >
+                  {p}
+                </button>
+              </span>
+            );
+          })}
+        </div>
 
-      <button
-        onClick={() => onChange(page + 1)}
-        disabled={page === totalPages}
-        className="w-9 h-9 flex items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-      >
-        <FiChevronRight className="w-4 h-4" />
-      </button>
+        <button
+          onClick={() => onChange(page + 1)}
+          disabled={page === totalPages}
+          className="flex items-center gap-1.5 h-9 px-4 rounded-full border border-gray-200 bg-white text-gray-500 text-xs font-semibold hover:border-gray-300 hover:text-dark disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+        >
+          Next <FiChevronRight className="w-3.5 h-3.5" />
+        </button>
+      </div>
     </div>
   );
 }
@@ -106,12 +113,16 @@ function NewArrivalsContent() {
               initial="hidden"
               animate="visible"
               exit={{ opacity: 0 }}
-              className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4"
+              className="flex flex-wrap gap-3 sm:gap-4"
             >
               {loading
-                ? Array.from({ length: PAGE_SIZE }, (_, i) => <ProductSkeleton key={i} />)
+                ? Array.from({ length: PAGE_SIZE }, (_, i) => (
+                    <div key={i} className="w-[calc(50%-6px)] sm:w-[calc(33.33%-11px)] md:w-[calc(25%-12px)] lg:w-[calc(20%-13px)]">
+                      <ProductSkeleton />
+                    </div>
+                  ))
                 : products?.map((product) => (
-                    <motion.div key={product.id || product._id} variants={fadeUp}>
+                    <motion.div key={product.id || product._id} variants={fadeUp} className="w-[calc(50%-6px)] sm:w-[calc(33.33%-11px)] md:w-[calc(25%-12px)] lg:w-[calc(20%-13px)]">
                       <ProductCard {...product} />
                     </motion.div>
                   ))}

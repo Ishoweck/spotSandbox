@@ -1,22 +1,25 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { Suspense, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import ProductCard from "@/components/ProductCard";
 import Link from "next/link";
-import { FiZap, FiArrowLeft } from "react-icons/fi";
-import { useApi } from "@/lib/useApi";
+import { FiZap, FiArrowLeft, FiChevronLeft, FiChevronRight } from "react-icons/fi";
+import { usePagedApi } from "@/lib/useApi";
 import type { Product } from "@/lib/api";
 import { fadeUp, stagger } from "@/lib/motion";
 
+const PAGE_SIZE = 20;
+
 const digitalCategories = [
-  { label: "E-Books",      emoji: "📚" },
-  { label: "Courses",      emoji: "🎓" },
-  { label: "Software Keys",emoji: "🔑" },
-  { label: "Templates",    emoji: "🗂️" },
-  { label: "Music & Audio",emoji: "🎵" },
-  { label: "Design Assets",emoji: "🎨" },
+  { label: "E-Books",       emoji: "📚" },
+  { label: "Courses",       emoji: "🎓" },
+  { label: "Software Keys", emoji: "🔑" },
+  { label: "Templates",     emoji: "🗂️" },
+  { label: "Music & Audio", emoji: "🎵" },
+  { label: "Design Assets", emoji: "🎨" },
 ];
 
 function ProductSkeleton() {
@@ -32,8 +35,68 @@ function ProductSkeleton() {
   );
 }
 
-export default function DigitalProductsPage() {
-  const { data: products, loading } = useApi<Product[]>("/products?productType=digital&limit=20");
+function Pagination({ page, totalPages, onChange }: { page: number; totalPages: number; onChange: (p: number) => void }) {
+  if (totalPages <= 1) return null;
+  const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
+  const visible = pages.filter(p => p === 1 || p === totalPages || Math.abs(p - page) <= 1);
+
+  return (
+    <div className="flex flex-col items-center gap-3 mt-12">
+      <p className="text-xs text-gray-400 font-medium tracking-wide">Page {page} of {totalPages}</p>
+      <div className="flex items-center gap-1">
+        <button
+          onClick={() => onChange(page - 1)}
+          disabled={page === 1}
+          className="flex items-center gap-1.5 h-9 px-4 rounded-full border border-gray-200 bg-white text-gray-500 text-xs font-semibold hover:border-gray-300 hover:text-dark disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+        >
+          <FiChevronLeft className="w-3.5 h-3.5" /> Prev
+        </button>
+
+        <div className="flex items-center gap-0.5 mx-2">
+          {visible.map((p, i) => {
+            const prev = visible[i - 1];
+            return (
+              <span key={p} className="flex items-center">
+                {prev && p - prev > 1 && (
+                  <span className="w-8 flex items-center justify-center text-gray-300 text-sm select-none">···</span>
+                )}
+                <button
+                  onClick={() => onChange(p)}
+                  className={`w-9 h-9 rounded-full text-sm font-bold transition-all duration-200 ${
+                    p === page
+                      ? "bg-primary text-white shadow-md shadow-primary/30 scale-110"
+                      : "text-gray-400 hover:bg-gray-100 hover:text-dark"
+                  }`}
+                >
+                  {p}
+                </button>
+              </span>
+            );
+          })}
+        </div>
+
+        <button
+          onClick={() => onChange(page + 1)}
+          disabled={page === totalPages}
+          className="flex items-center gap-1.5 h-9 px-4 rounded-full border border-gray-200 bg-white text-gray-500 text-xs font-semibold hover:border-gray-300 hover:text-dark disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+        >
+          Next <FiChevronRight className="w-3.5 h-3.5" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function DigitalProductsContent() {
+  const [page, setPage] = useState(1);
+  const { data: products, total, totalPages, loading } = usePagedApi<Product>(
+    `/products?productType=digital&limit=${PAGE_SIZE}&page=${page}`
+  );
+
+  const handlePageChange = (p: number) => {
+    setPage(p);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   return (
     <>
@@ -81,22 +144,41 @@ export default function DigitalProductsPage() {
         </section>
 
         {/* Products grid */}
-        <section className="py-10 sm:py-14 px-4 sm:px-6">
+        <section className="py-10 sm:py-14 px-4 sm:px-6 bg-gray-50 min-h-[60vh]">
           <div className="max-w-7xl mx-auto">
             <div className="flex items-center justify-between mb-6 px-1">
               <Link href="/products" className="flex items-center gap-1.5 text-xs sm:text-sm font-medium text-gray-400 hover:text-dark transition-colors">
                 <FiArrowLeft className="w-3.5 h-3.5" /> All products
               </Link>
-              {!loading && products && (
-                <span className="text-xs text-gray-400">{products.length} items</span>
+              {!loading && total > 0 && (
+                <span className="text-xs text-gray-400">{total} items · Page {page} of {totalPages}</span>
               )}
             </div>
 
-            {loading ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
-                {Array.from({ length: 10 }, (_, i) => <ProductSkeleton key={i} />)}
-              </div>
-            ) : !products || products.length === 0 ? (
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={page}
+                variants={stagger}
+                initial="hidden"
+                animate="visible"
+                exit={{ opacity: 0 }}
+                className="flex flex-wrap gap-3 sm:gap-4"
+              >
+                {loading
+                  ? Array.from({ length: PAGE_SIZE }, (_, i) => (
+                      <div key={i} className="w-[calc(50%-6px)] sm:w-[calc(33.33%-11px)] md:w-[calc(25%-12px)] lg:w-[calc(20%-13px)]">
+                        <ProductSkeleton />
+                      </div>
+                    ))
+                  : products?.map((product) => (
+                      <motion.div key={product.id || product._id} variants={fadeUp} className="w-[calc(50%-6px)] sm:w-[calc(33.33%-11px)] md:w-[calc(25%-12px)] lg:w-[calc(20%-13px)]">
+                        <ProductCard {...product} />
+                      </motion.div>
+                    ))}
+              </motion.div>
+            </AnimatePresence>
+
+            {!loading && (!products || products.length === 0) && (
               <motion.div variants={fadeUp} initial="hidden" animate="visible"
                 className="flex flex-col items-center justify-center py-28 text-center">
                 <div className="w-16 h-16 bg-gray-100 rounded-3xl flex items-center justify-center mb-4 text-3xl">
@@ -108,18 +190,9 @@ export default function DigitalProductsPage() {
                   Browse All Products
                 </Link>
               </motion.div>
-            ) : (
-              <motion.div
-                variants={stagger} initial="hidden" animate="visible"
-                className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4"
-              >
-                {products.map((product) => (
-                  <motion.div key={product.id || product._id} variants={fadeUp}>
-                    <ProductCard {...product} />
-                  </motion.div>
-                ))}
-              </motion.div>
             )}
+
+            <Pagination page={page} totalPages={totalPages} onChange={handlePageChange} />
           </div>
         </section>
 
@@ -127,4 +200,8 @@ export default function DigitalProductsPage() {
       <Footer />
     </>
   );
+}
+
+export default function DigitalProductsPage() {
+  return <Suspense><DigitalProductsContent /></Suspense>;
 }

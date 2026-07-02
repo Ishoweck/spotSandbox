@@ -2,25 +2,49 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { FiSearch } from "react-icons/fi";
+import { FiSearch, FiLoader } from "react-icons/fi";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { APP_STORE_URL, PLAY_STORE_URL } from "@/lib/appStore";
+import { useApi } from "@/lib/useApi";
+import type { Category } from "@/lib/api";
 
-const categories = [
-  { name: "Fashion",          image: "/homepage-icons/fasion.png",    slug: "fashion" },
-  { name: "Groceries",        image: "/homepage-icons/groceries.png", slug: "groceries" },
-  { name: "Beauty",           image: "/homepage-icons/beauty.png",    slug: "beauty" },
-  { name: "Gadgets",          image: "/homepage-icons/gadget.png",    slug: "gadgets" },
-  { name: "Jewelry",          image: "/homepage-icons/Jewelry.png",   slug: "jewelry" },
-  { name: "Digital Products", image: "/homepage-icons/digitals.png",   slug: "digital-products" },
+const categoryDefs = [
+  { name: "Fashion",          image: "/homepage-icons/fasion.png",    keywords: ["fashion", "clothing", "wear", "apparel"] },
+  { name: "Groceries",        image: "/homepage-icons/groceries.png", keywords: ["groceries", "grocery", "food", "supermarket"] },
+  { name: "Beauty",           image: "/homepage-icons/beauty.png",    keywords: ["beauty", "cosmetic", "skincare", "makeup"] },
+  { name: "Gadgets",          image: "/homepage-icons/gadget.png",    keywords: ["gadget", "electronics", "tech", "electrical"] },
+  { name: "Jewelry",          image: "/homepage-icons/Jewelry.png",   keywords: ["jewelry", "jewellery", "jewel", "accessories"] },
+  { name: "Digital Products", image: "/homepage-icons/digitals.png",  keywords: ["digital", "ebook", "software", "course", "download"] },
 ];
 
-// U-shape arc: outer icons sit higher, middle icons sit lower
 const arcOffsets = [0, 28, 48, 48, 28, 0];
 
 export default function Hero() {
+  const router = useRouter();
   const [search, setSearch] = useState("");
+  const [navigating, setNavigating] = useState<string | null>(null);
+
+  const { data: categoriesData } = useApi<{ categories: Category[] }>("/categories");
+  const allCategories = categoriesData?.categories ?? null;
+
+  const handleCategoryClick = (def: typeof categoryDefs[0]) => {
+    setNavigating(def.name);
+    if (allCategories) {
+      const match = allCategories.find(c =>
+        def.keywords.some(kw =>
+          c.slug.toLowerCase().includes(kw) || c.name.toLowerCase().includes(kw)
+        )
+      );
+      if (match) {
+        router.push(`/products?category=${match.slug}`);
+        return;
+      }
+    }
+    // fallback: search by name
+    router.push(`/products?q=${encodeURIComponent(def.name)}`);
+  };
 
   return (
     <section
@@ -77,36 +101,40 @@ export default function Hero() {
         >
           {/* Mobile: clean 3-column grid, no arc */}
           <div className="grid grid-cols-3 gap-x-4 gap-y-6 md:hidden">
-            {categories.map((cat, i) => (
+            {categoryDefs.map((cat, i) => (
               <motion.div
-                key={cat.slug}
+                key={cat.name}
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4, delay: 0.25 + i * 0.06 }}
               >
-                <Link href={`/products?category=${cat.slug}`} className="flex flex-col items-center gap-2 group">
+                <button onClick={() => handleCategoryClick(cat)} className="flex flex-col items-center gap-2 group w-full">
                   <motion.div whileTap={{ scale: 0.95 }} transition={{ type: "spring", stiffness: 320, damping: 22 }}>
-                    <div className="w-20 h-20 rounded-full bg-white overflow-hidden p-2.5 shadow-md ring-2 ring-transparent transition-all duration-300">
-                      <Image src={cat.image} alt={cat.name} width={80} height={80} className="w-full h-full object-contain" />
+                    <div className="w-20 h-20 rounded-full bg-white overflow-hidden p-2.5 shadow-md ring-2 ring-transparent transition-all duration-300 relative flex items-center justify-center">
+                      {navigating === cat.name ? (
+                        <FiLoader className="w-7 h-7 text-primary animate-spin" />
+                      ) : (
+                        <Image src={cat.image} alt={cat.name} width={80} height={80} className="w-full h-full object-contain" />
+                      )}
                     </div>
                   </motion.div>
                   <span className="text-xs font-semibold text-white/75 text-center leading-tight">{cat.name}</span>
-                </Link>
+                </button>
               </motion.div>
             ))}
           </div>
 
           {/* Desktop: single-row U-arc */}
           <div className="hidden md:flex justify-center items-start gap-8 lg:gap-14">
-            {categories.map((cat, i) => (
+            {categoryDefs.map((cat, i) => (
               <motion.div
-                key={cat.slug}
+                key={cat.name}
                 initial={{ opacity: 0, y: arcOffsets[i] + 16 }}
                 animate={{ opacity: 1, y: arcOffsets[i] }}
                 transition={{ duration: 0.45, delay: 0.25 + i * 0.07 }}
                 className="shrink-0"
               >
-                <Link href={`/products?category=${cat.slug}`} className="flex flex-col items-center gap-3 group">
+                <button onClick={() => handleCategoryClick(cat)} className="flex flex-col items-center gap-3 group">
                   <motion.div
                     whileHover={{ scale: 1.12, y: -8 }}
                     whileTap={{ scale: 0.95 }}
@@ -115,14 +143,18 @@ export default function Hero() {
                     <div className="w-24 h-24 rounded-full bg-white overflow-hidden p-2.5
                       shadow-md group-hover:shadow-2xl group-hover:shadow-white/40
                       ring-2 ring-transparent group-hover:ring-white/50
-                      transition-all duration-300">
-                      <Image src={cat.image} alt={cat.name} width={96} height={96} className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-110" />
+                      transition-all duration-300 relative flex items-center justify-center">
+                      {navigating === cat.name ? (
+                        <FiLoader className="w-8 h-8 text-primary animate-spin" />
+                      ) : (
+                        <Image src={cat.image} alt={cat.name} width={96} height={96} className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-110" />
+                      )}
                     </div>
                   </motion.div>
                   <span className="text-sm font-semibold text-white/75 group-hover:text-white text-center leading-tight transition-all duration-300 group-hover:font-bold">
                     {cat.name}
                   </span>
-                </Link>
+                </button>
               </motion.div>
             ))}
           </div>

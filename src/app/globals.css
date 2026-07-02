@@ -56,3 +56,9 @@ body {
 .animate-marquee:hover {
   animation-play-state: paused;
 }
+
+/* Trust ticker on products page */
+@keyframes ticker {
+  0%   { transform: translateX(0%); }
+  100% { transform: translateX(-50%); }
+}

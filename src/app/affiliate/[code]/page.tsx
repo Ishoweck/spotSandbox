@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
+import FooterMini from "@/components/FooterMini";
 import Link from "next/link";
 
 export default function AffiliateLandingPage() {
@@ -127,7 +127,7 @@ export default function AffiliateLandingPage() {
           </p>
         </div>
       </main>
-      <Footer />
+      <FooterMini />
     </>
   );
 }

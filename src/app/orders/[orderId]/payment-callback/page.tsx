@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
+import FooterMini from "@/components/FooterMini";
 import { useCart } from "@/lib/CartContext";
 import { FiLoader, FiCheck, FiAlertCircle, FiArrowRight } from "react-icons/fi";
 
@@ -145,7 +145,7 @@ export default function PaymentCallbackPage() {
           </motion.div>
         </AnimatePresence>
       </main>
-      <Footer />
+      <FooterMini />
     </>
   );
 }

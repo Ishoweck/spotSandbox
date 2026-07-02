@@ -98,12 +98,16 @@ export default function TopSellers() {
                       whileHover={{ scale: 1.05, y: -6 }}
                       whileTap={{ scale: 0.97 }}
                       transition={{ type: "spring", stiffness: 300, damping: 22 }}
-                      className="w-28 h-28 rounded-full overflow-hidden
-                        shadow-[0_4px_24px_rgba(0,0,0,0.10)]
-                        group-hover:shadow-[0_10px_36px_rgba(0,0,0,0.16)]
-                        transition-shadow duration-300 ring-4 ring-white"
+                      className="relative w-28 h-28"
                     >
-                      <Image src={avatarSrc(vendor)!} alt={vendor.name} width={112} height={112} className="w-full h-full object-cover" style={{ width: "100%", height: "100%" }} />
+                      <div className="w-full h-full rounded-full overflow-hidden shadow-[0_4px_24px_rgba(0,0,0,0.10)] group-hover:shadow-[0_10px_36px_rgba(0,0,0,0.16)] transition-shadow duration-300 ring-4 ring-white">
+                        <Image src={avatarSrc(vendor)!} alt={vendor.name} width={112} height={112} className="w-full h-full object-cover" style={{ width: "100%", height: "100%" }} />
+                      </div>
+                      {vendor.isPremium && (
+                        <span className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full border-2 border-white shadow-sm bg-white flex items-center justify-center">
+                          <Image src="/icons/verify.svg" alt="Premium" width={20} height={20} style={{ width: 20, height: 20, filter: "brightness(0) saturate(100%) invert(38%) sepia(93%) saturate(1500%) hue-rotate(199deg) brightness(101%) contrast(102%)" }} />
+                        </span>
+                      )}
                     </motion.div>
                     <div className="h-5 flex items-center justify-center w-28 mt-3">
                       <p className="text-xs font-bold text-gray-900 text-center w-full truncate leading-none">{vendor.name}</p>
@@ -145,12 +149,16 @@ export default function TopSellers() {
                       whileHover={{ scale: 1.05, y: -6 }}
                       whileTap={{ scale: 0.97 }}
                       transition={{ type: "spring", stiffness: 300, damping: 22 }}
-                      className="w-full aspect-square rounded-full overflow-hidden
-                        shadow-[0_4px_24px_rgba(0,0,0,0.10)]
-                        group-hover:shadow-[0_10px_36px_rgba(0,0,0,0.16)]
-                        transition-shadow duration-300 ring-4 ring-white"
+                      className="relative w-full aspect-square"
                     >
-                      <Image src={avatarSrc(vendor)!} alt={vendor.name} width={200} height={200} className="w-full h-full object-cover" style={{ width: "100%", height: "100%" }} />
+                      <div className="w-full h-full rounded-full overflow-hidden shadow-[0_4px_24px_rgba(0,0,0,0.10)] group-hover:shadow-[0_10px_36px_rgba(0,0,0,0.16)] transition-shadow duration-300 ring-4 ring-white">
+                        <Image src={avatarSrc(vendor)!} alt={vendor.name} width={200} height={200} className="w-full h-full object-cover" style={{ width: "100%", height: "100%" }} />
+                      </div>
+                      {vendor.isPremium && (
+                        <span className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full border-2 border-white shadow-sm bg-white flex items-center justify-center">
+                          <Image src="/icons/verify.svg" alt="Premium" width={20} height={20} style={{ width: 20, height: 20, filter: "brightness(0) saturate(100%) invert(38%) sepia(93%) saturate(1500%) hue-rotate(199deg) brightness(101%) contrast(102%)" }} />
+                        </span>
+                      )}
                     </motion.div>
                     <div className="h-5 flex items-center justify-center w-full mt-3">
                       <p className="text-sm font-bold text-gray-900 text-center w-full truncate leading-none">{vendor.name}</p>

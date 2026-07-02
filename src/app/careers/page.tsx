@@ -35,6 +35,32 @@ const roles = [
     ],
   },
   {
+    id: "ui-ux-designer",
+    title: "UI/UX Designer",
+    type: "Volunteer",
+    location: "Remote / Lagos",
+    department: "Design",
+    color: "bg-pink-500",
+    description:
+      "We're looking for a product-minded UI/UX Designer to craft intuitive, beautiful experiences across the Vendorspot web and mobile platforms. You'll own end-to-end design — from user research and wireframes to polished high-fidelity screens — helping buyers and vendors navigate the marketplace with ease.",
+    responsibilities: [
+      "Design user flows, wireframes, and high-fidelity screens for web and mobile",
+      "Conduct user research and translate insights into actionable design decisions",
+      "Build and maintain a consistent design system across all product surfaces",
+      "Collaborate closely with engineering to ensure pixel-accurate implementation",
+      "Run usability tests and iterate based on feedback",
+      "Champion accessibility and inclusive design practices across the product",
+    ],
+    requirements: [
+      "Strong portfolio of shipped mobile and/or web product work",
+      "Proficiency in Figma (components, auto-layout, prototyping)",
+      "Solid grasp of UX principles — information architecture, user flows, usability",
+      "Experience designing for both iOS/Android and responsive web",
+      "Ability to think in systems, not just screens",
+      "Understanding of front-end constraints is a strong plus",
+    ],
+  },
+  {
     id: "graphic-designer",
     title: "Graphic Designer / Art Director",
     type: "Volunteer",
