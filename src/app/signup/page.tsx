@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { FiUser, FiMail, FiPhone, FiLock, FiEye, FiEyeOff, FiChevronDown, FiSmartphone, FiGift } from "react-icons/fi";
 import { fadeUp, stagger } from "@/lib/motion";
 import { detectOS, openAppOrStore, APP_STORE_URL, PLAY_STORE_URL, type OS } from "@/lib/appStore";
+import { Spinner } from "@/components/Spinner";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
 
@@ -322,8 +323,9 @@ export default function SignupPage() {
 
               <motion.button
                 type="submit" disabled={loading} whileTap={{ scale: 0.98 }}
-                className="w-full bg-primary hover:bg-primary-dark text-white font-semibold py-3.5 rounded-full text-sm transition-colors disabled:opacity-60 mt-1"
+                className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-dark text-white font-semibold py-3.5 rounded-full text-sm transition-colors disabled:opacity-60 mt-1"
               >
+                {loading && <Spinner />}
                 {loading ? "Creating account…" : "Create account"}
               </motion.button>
 

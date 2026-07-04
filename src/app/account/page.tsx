@@ -11,6 +11,8 @@ import {
   FiMail, FiLock, FiPackage, FiTrash2, FiCheck,
   FiAlertCircle, FiEye, FiEyeOff, FiLogOut, FiChevronRight, FiUser, FiMapPin,
 } from "react-icons/fi";
+import { Spinner } from "@/components/Spinner";
+import { authFetch } from "@/lib/auth-fetch";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
 
@@ -80,9 +82,8 @@ export default function AccountPage() {
     setProfileMsg(null);
     setProfileLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/auth/profile`, {
+      const res = await authFetch(`${API_BASE}/auth/profile`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${getToken()}` },
         body: JSON.stringify({ firstName, lastName, location }),
       });
       const json = await res.json();
@@ -105,9 +106,8 @@ export default function AccountPage() {
     if (newPw.length < 6)    { setPwMsg({ ok: false, text: "Password must be at least 6 characters." }); return; }
     setPwLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/auth/change-password`, {
+      const res = await authFetch(`${API_BASE}/auth/change-password`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${getToken()}` },
         body: JSON.stringify({ currentPassword: currentPw, newPassword: newPw }),
       });
       const json = await res.json();
@@ -244,7 +244,8 @@ export default function AccountPage() {
                 </div>
                 {profileMsg && <Feedback ok={profileMsg.ok} text={profileMsg.text} />}
                 <button type="submit" disabled={profileLoading}
-                  className="w-full bg-primary hover:bg-primary-dark text-white text-sm font-bold py-3.5 rounded-xl transition-colors disabled:opacity-50">
+                  className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-dark text-white text-sm font-bold py-3.5 rounded-xl transition-colors disabled:opacity-50">
+                  {profileLoading && <Spinner />}
                   {profileLoading ? "Saving…" : "Save Changes"}
                 </button>
               </form>
@@ -275,7 +276,8 @@ export default function AccountPage() {
                 </div>
                 {pwMsg && <Feedback ok={pwMsg.ok} text={pwMsg.text} />}
                 <button type="submit" disabled={pwLoading}
-                  className="w-full bg-primary hover:bg-primary-dark text-white text-sm font-bold py-3.5 rounded-xl transition-colors disabled:opacity-50">
+                  className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-dark text-white text-sm font-bold py-3.5 rounded-xl transition-colors disabled:opacity-50">
+                  {pwLoading && <Spinner />}
                   {pwLoading ? "Updating…" : "Update Password"}
                 </button>
               </form>

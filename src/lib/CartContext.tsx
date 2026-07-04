@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { friendlyError } from "./errorMessage";
+import { authFetch, getToken } from "./auth-fetch";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
 const LOCAL_KEY = "vendorspot_cart";
@@ -60,17 +61,6 @@ function totals(items: CartItem[], discount = 0) {
   return { subtotal, deliveryFee: 0, discount, total: subtotal - discount };
 }
 
-function getToken() {
-  if (typeof window === "undefined") return null;
-  return localStorage.getItem("vendorspot_token");
-}
-
-function headers() {
-  const token = getToken();
-  const h: Record<string, string> = { "Content-Type": "application/json" };
-  if (token) h["Authorization"] = `Bearer ${token}`;
-  return h;
-}
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [cart, setCart] = useState<Cart>(emptyCart);
@@ -80,7 +70,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const fetchBackend = useCallback(async () => {
     if (!getToken()) return;
     try {
-      const res = await fetch(`${API_BASE}/cart`, { headers: headers() });
+      const res = await authFetch(`${API_BASE}/cart`);
       const json = await res.json();
       if (json.success) {
         const c = json.data?.cart;
@@ -109,9 +99,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setLoading(true);
     try {
       if (getToken()) {
-        const res = await fetch(`${API_BASE}/cart/add`, {
+        const res = await authFetch(`${API_BASE}/cart/add`, {
           method: "POST",
-          headers: headers(),
           body: JSON.stringify({ productId, quantity, variant }),
         });
         const json = await res.json();
@@ -146,7 +135,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setLoading(true);
     try {
       if (getToken()) {
-        await fetch(`${API_BASE}/cart/items/${itemId}`, { method: "DELETE", headers: headers() });
+        await authFetch(`${API_BASE}/cart/items/${itemId}`, { method: "DELETE" });
         await fetchBackend();
       } else {
         setCart((prev) => {
@@ -165,9 +154,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setLoading(true);
     try {
       if (getToken()) {
-        await fetch(`${API_BASE}/cart/items/${itemId}`, {
+        await authFetch(`${API_BASE}/cart/items/${itemId}`, {
           method: "PUT",
-          headers: headers(),
           body: JSON.stringify({ quantity }),
         });
         await fetchBackend();
@@ -186,7 +174,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const clearCart = async () => {
     setLoading(true);
     try {
-      if (getToken()) await fetch(`${API_BASE}/cart`, { method: "DELETE", headers: headers() });
+      if (getToken()) await authFetch(`${API_BASE}/cart`, { method: "DELETE" });
       try { localStorage.removeItem(LOCAL_KEY); } catch {}
       setCart(emptyCart);
     } finally {
@@ -198,9 +186,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     if (!getToken()) return { success: false, message: "Please log in to apply coupons." };
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/cart/coupon/apply`, {
+      const res = await authFetch(`${API_BASE}/cart/coupon/apply`, {
         method: "POST",
-        headers: headers(),
         body: JSON.stringify({ code }),
       });
       const json = await res.json();
