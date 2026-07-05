@@ -6,6 +6,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { FiArrowRight, FiCheck, FiMapPin, FiClock, FiBriefcase, FiSend, FiX } from "react-icons/fi";
 import { fadeUp } from "@/lib/motion";
+import { Spinner } from "@/components/Spinner";
 
 const roles = [
   {
@@ -100,14 +101,19 @@ const perks = [
 function ApplyModal({ role, onClose }: { role: typeof roles[0]; onClose: () => void }) {
   const [form, setForm] = useState({ name: "", email: "", portfolio: "", message: "" });
   const [sent, setSent] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await fetch("/api/careers", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ role: role.title, ...form }),
-    }).catch(() => {});
+    setLoading(true);
+    try {
+      await fetch("/api/careers", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ role: role.title, ...form }),
+      });
+    } catch {}
+    setLoading(false);
     setSent(true);
   };
 
@@ -197,10 +203,11 @@ function ApplyModal({ role, onClose }: { role: typeof roles[0]; onClose: () => v
               </div>
               <button
                 type="submit"
-                className="w-full bg-primary hover:bg-primary-dark text-white font-semibold text-sm py-3.5 rounded-full transition-colors flex items-center justify-center gap-2 mt-2"
+                disabled={loading}
+                className="w-full bg-primary hover:bg-primary-dark text-white font-semibold text-sm py-3.5 rounded-full transition-colors flex items-center justify-center gap-2 mt-2 disabled:opacity-60"
               >
-                <FiSend className="w-4 h-4" />
-                Submit Application
+                {loading ? <Spinner /> : <FiSend className="w-4 h-4" />}
+                {loading ? "Submitting…" : "Submit Application"}
               </button>
             </form>
           )}

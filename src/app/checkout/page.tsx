@@ -7,6 +7,7 @@ import Navbar from "@/components/Navbar";
 import FooterMini from "@/components/FooterMini";
 import { useCart } from "@/lib/CartContext";
 import { useToast } from "@/components/Toast";
+import { Spinner } from "@/components/Spinner";
 import { FiMapPin, FiTag, FiTruck, FiChevronRight, FiCheck, FiPlus, FiCreditCard, FiLoader, FiPackage, FiAlertCircle, FiShield, FiX } from "react-icons/fi";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
@@ -468,8 +469,9 @@ export default function CheckoutPage() {
                               <input value={addressForm.state} onChange={(e) => setAddressForm({ ...addressForm, state: e.target.value })} placeholder="State" className="border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary bg-white" />
                             </div>
                             <div className="flex gap-2 pt-1">
-                              <button onClick={handleSaveAddress} disabled={savingAddress} className="flex-1 bg-primary text-white text-sm font-semibold py-2 rounded-lg hover:bg-primary-dark disabled:opacity-60 transition-colors">
-                                {savingAddress ? "Saving..." : "Save Address"}
+                              <button onClick={handleSaveAddress} disabled={savingAddress} className="flex-1 flex items-center justify-center gap-2 bg-primary text-white text-sm font-semibold py-2 rounded-lg hover:bg-primary-dark disabled:opacity-60 transition-colors">
+                                {savingAddress && <Spinner />}
+                                {savingAddress ? "Saving…" : "Save Address"}
                               </button>
                               {addresses.length > 0 && (
                                 <button onClick={() => setShowAddressForm(false)} className="px-4 border border-gray-200 text-sm text-gray-600 rounded-lg hover:bg-gray-100 transition-colors">
@@ -639,9 +641,10 @@ export default function CheckoutPage() {
                     <button
                       onClick={handleApplyPromo}
                       disabled={promoLoading || !promoInput.trim()}
-                      className="bg-primary text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-primary-dark disabled:opacity-50 transition-colors"
+                      className="flex items-center gap-1.5 bg-primary text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-primary-dark disabled:opacity-50 transition-colors"
                     >
-                      {promoLoading ? "..." : "Apply"}
+                      {promoLoading && <Spinner className="w-3.5 h-3.5" />}
+                      {promoLoading ? "Applying…" : "Apply"}
                     </button>
                   </div>
                   {promoMessage && (

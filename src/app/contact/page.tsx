@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { FiMail, FiMapPin, FiPhone, FiSend, FiCheck, FiMessageCircle, FiClock } from "react-icons/fi";
+import { Spinner } from "@/components/Spinner";
 import { FaXTwitter, FaInstagram, FaLinkedinIn } from "react-icons/fa6";
 import { fadeUp, slideLeft, slideRight, stagger } from "@/lib/motion";
 
@@ -49,17 +50,22 @@ const socials = [
 export default function ContactPage() {
   const [form, setForm] = useState({ name: "", email: "", subject: "", message: "" });
   const [sent, setSent] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await fetch("/api/contact", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
-    }).catch(() => {});
+    setLoading(true);
+    try {
+      await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+    } catch {}
+    setLoading(false);
     setSent(true);
   };
 
@@ -249,10 +255,11 @@ export default function ContactPage() {
 
                     <button
                       type="submit"
-                      className="w-full flex items-center justify-center gap-2.5 bg-primary hover:bg-primary-dark text-white font-semibold text-sm rounded-xl py-3.5 transition-colors shadow-sm"
+                      disabled={loading}
+                      className="w-full flex items-center justify-center gap-2.5 bg-primary hover:bg-primary-dark text-white font-semibold text-sm rounded-xl py-3.5 transition-colors shadow-sm disabled:opacity-60"
                     >
-                      <FiSend className="w-4 h-4" />
-                      Send Message
+                      {loading ? <Spinner /> : <FiSend className="w-4 h-4" />}
+                      {loading ? "Sending…" : "Send Message"}
                     </button>
                   </form>
                 )}

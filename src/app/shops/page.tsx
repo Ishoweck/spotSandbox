@@ -393,7 +393,7 @@ export default function ShopsPage() {
                   <span
                     key={i}
                     className="inline-flex items-center shrink-0 text-white text-xs sm:text-sm font-semibold"
-                    style={{ paddingLeft: '3rem', paddingRight: '3rem' }}
+                    style={{ paddingLeft: '8rem', paddingRight: '8rem' }}
                   >
                     {text}
                     <span className="ml-12 text-white/30">✦</span>
