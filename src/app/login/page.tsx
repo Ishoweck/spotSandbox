@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { FiMail, FiLock, FiEye, FiEyeOff } from "react-icons/fi";
+import { FiMail, FiLock, FiEye, FiEyeOff, FiAlertTriangle } from "react-icons/fi";
 import { fadeUp, stagger } from "@/lib/motion";
 import { useGoogleSignIn } from "@/lib/useGoogleSignIn";
+import { consumeExpiredFlag } from "@/lib/auth-fetch";
+import { Spinner } from "@/components/Spinner";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
 
@@ -15,10 +17,15 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [sessionExpired, setSessionExpired] = useState(false);
   const [showActivationCta, setShowActivationCta] = useState(false);
   const { signInWithGoogle, loading: googleLoading, error: googleError } = useGoogleSignIn();
   const [activationSent, setActivationSent] = useState(false);
   const [activationLoading, setActivationLoading] = useState(false);
+
+  useEffect(() => {
+    if (consumeExpiredFlag()) setSessionExpired(true);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -108,6 +115,13 @@ export default function LoginPage() {
         className="flex-1 bg-white px-5 sm:px-6 pt-2 pb-10 max-w-md w-full mx-auto"
       >
         <form onSubmit={handleSubmit} className="space-y-4">
+          {sessionExpired && (
+            <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
+              className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm text-amber-800">
+              <FiAlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-amber-500" />
+              <p>Your session has expired. Please log in again to continue.</p>
+            </motion.div>
+          )}
           <AnimateError error={error || googleError} />
           {showActivationCta && (
             <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
@@ -165,8 +179,9 @@ export default function LoginPage() {
             type="submit"
             disabled={loading}
             whileTap={{ scale: 0.98 }}
-            className="w-full bg-primary hover:bg-primary-dark text-white font-semibold py-3.5 rounded-full text-sm transition-colors disabled:opacity-60 mt-1"
+            className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-dark text-white font-semibold py-3.5 rounded-full text-sm transition-colors disabled:opacity-60 mt-1"
           >
+            {loading && <Spinner />}
             {loading ? "Signing in…" : "Sign In"}
           </motion.button>
         </form>

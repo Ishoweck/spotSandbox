@@ -14,6 +14,7 @@ import {
   FiChevronDown, FiChevronUp, FiPackage,
 } from "react-icons/fi";
 import { useCart } from "@/lib/CartContext";
+import { Spinner } from "@/components/Spinner";
 import { FaFacebook, FaInstagram, FaWhatsapp } from "react-icons/fa";
 import { FaXTwitter } from "react-icons/fa6";
 
@@ -86,11 +87,12 @@ export default function ProductDetailPage() {
   const [activeImage, setActiveImage] = useState(0);
   const [saved, setSaved] = useState(false);
   const [addedToCart, setAddedToCart] = useState(false);
+  const [cartLoading, setCartLoading] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [variantError, setVariantError] = useState("");
-  const { addToCart } = useCart();
+  const { cart, addToCart, updateQuantity, removeFromCart } = useCart();
 
   useEffect(() => {
     setSelectedSize(null);
@@ -109,9 +111,14 @@ export default function ProductDetailPage() {
     if (selectedSize) variantParts.push(`Size: ${selectedSize}`);
     if (selectedColor) variantParts.push(`Color: ${selectedColor}`);
     const variant = variantParts.length > 0 ? variantParts.join(", ") : undefined;
-    await addToCart(product.id, { _id: product.id, name: product.name, price: product.price, images: product.images || [] }, 1, variant);
-    setAddedToCart(true);
-    setTimeout(() => setAddedToCart(false), 1500);
+    setCartLoading(true);
+    try {
+      await addToCart(product.id, { _id: product.id, name: product.name, price: product.price, images: product.images || [] }, 1, variant);
+      setAddedToCart(true);
+      setTimeout(() => setAddedToCart(false), 1500);
+    } finally {
+      setCartLoading(false);
+    }
   };
 
   const handleShare = async () => {
@@ -506,16 +513,93 @@ export default function ProductDetailPage() {
 
                 {variantError && <p className="text-xs text-red-500 mb-3">{variantError}</p>}
 
-                {/* Add to cart */}
-                <button onClick={handleAddToCart}
-                  className={`w-full font-bold py-3.5 rounded-2xl mb-3 transition-all flex items-center justify-center gap-2 text-sm ${
-                    addedToCart
-                      ? "bg-emerald-500 text-white"
-                      : "bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20"
-                  }`}>
-                  {addedToCart ? <FiCheck className="w-4 h-4" /> : <FiShoppingCart className="w-4 h-4" />}
-                  {addedToCart ? "Added to Cart!" : "Add to Cart"}
-                </button>
+                {/* Add to cart / Quantity stepper */}
+                {(() => {
+                  const cartItem = product
+                    ? cart.items.find((i) => i.product._id === product.id)
+                    : undefined;
+
+                  if (cartItem) {
+                    return (
+                      <div className="mb-3 space-y-2">
+                        {/* In-cart badge */}
+                        <div className="flex items-center justify-between px-4 py-2.5 bg-emerald-50 border border-emerald-100 rounded-xl">
+                          <div className="flex items-center gap-2">
+                            <div className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center shrink-0">
+                              <FiCheck className="w-3 h-3 text-white" strokeWidth={3} />
+                            </div>
+                            <span className="text-sm font-semibold text-emerald-700">
+                              {cartItem.quantity === 1
+                                ? "Added to your cart"
+                                : `${cartItem.quantity} in your cart`}
+                            </span>
+                          </div>
+                          <Link
+                            href="/cart"
+                            className="text-xs font-bold text-primary hover:underline flex items-center gap-0.5 shrink-0"
+                          >
+                            View Cart <FiChevronRight className="w-3 h-3" />
+                          </Link>
+                        </div>
+
+                        {/* Stepper */}
+                        <div className="flex items-center gap-3">
+                          <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide shrink-0">
+                            Qty
+                          </span>
+                          <div className="flex-1 flex items-center rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
+                            <button
+                              disabled={cartLoading}
+                              onClick={async () => {
+                                setCartLoading(true);
+                                try {
+                                  if (cartItem.quantity <= 1) await removeFromCart(cartItem._id);
+                                  else await updateQuantity(cartItem._id, cartItem.quantity - 1);
+                                } finally { setCartLoading(false); }
+                              }}
+                              className="w-12 py-3 text-lg font-bold text-gray-500 hover:bg-gray-50 transition-colors disabled:opacity-40 shrink-0"
+                            >
+                              −
+                            </button>
+                            <div className="flex-1 py-3 text-sm font-extrabold text-dark border-x border-gray-200 text-center tabular-nums">
+                              {cartLoading ? <Spinner className="mx-auto" /> : cartItem.quantity}
+                            </div>
+                            <button
+                              disabled={cartLoading}
+                              onClick={async () => {
+                                setCartLoading(true);
+                                try { await updateQuantity(cartItem._id, cartItem.quantity + 1); }
+                                finally { setCartLoading(false); }
+                              }}
+                              className="w-12 py-3 text-lg font-bold text-primary hover:bg-primary/5 transition-colors disabled:opacity-40 shrink-0"
+                            >
+                              +
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <button onClick={handleAddToCart}
+                      disabled={cartLoading}
+                      className={`w-full font-bold py-3.5 rounded-2xl mb-3 transition-all flex items-center justify-center gap-2 text-sm disabled:opacity-70 disabled:cursor-not-allowed ${
+                        addedToCart
+                          ? "bg-emerald-500 text-white"
+                          : "bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20"
+                      }`}>
+                      {cartLoading ? (
+                        <Spinner />
+                      ) : addedToCart ? (
+                        <FiCheck className="w-4 h-4" />
+                      ) : (
+                        <FiShoppingCart className="w-4 h-4" />
+                      )}
+                      {cartLoading ? "Adding…" : addedToCart ? "Added to Cart!" : "Add to Cart"}
+                    </button>
+                  );
+                })()}
 
                 {/* Secondary actions */}
                 <div className="grid grid-cols-2 gap-2 mb-3">

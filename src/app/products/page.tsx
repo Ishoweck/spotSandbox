@@ -538,7 +538,7 @@ function ProductsPageContent() {
                   <span
                     key={i}
                     className="inline-flex items-center shrink-0 text-white text-xs sm:text-sm font-semibold"
-                    style={{ paddingLeft: '3rem', paddingRight: '3rem' }}
+                    style={{ paddingLeft: '8rem', paddingRight: '8rem' }}
                   >
                     {text}
                     <span className="ml-12 text-white/30">✦</span>
@@ -713,7 +713,7 @@ function ProductsPageContent() {
                   </div>
 
                   {loadingAll ? (
-                    <div className="flex flex-wrap gap-3 sm:gap-4">
+                    <div className="flex flex-wrap gap-5 sm:gap-7">
                       {Array.from({ length: 10 }, (_, i) => <div key={i} className={FLEX_ITEM_CLASS[5]}><ProductSkeleton /></div>)}
                     </div>
                   ) : !filteredProducts || filteredProducts.length === 0 ? (
@@ -728,7 +728,7 @@ function ProductsPageContent() {
                       </button>
                     </div>
                   ) : (
-                    <motion.div variants={stagger} initial="hidden" animate="visible" className="flex flex-wrap gap-3 sm:gap-4">
+                    <motion.div variants={stagger} initial="hidden" animate="visible" className="flex flex-wrap gap-5 sm:gap-7">
                       {filteredProducts.map((product) => (
                         <motion.div key={product.id || product._id} variants={fadeUp} className={FLEX_ITEM_CLASS[5]}>
                           <ProductCard {...product} />

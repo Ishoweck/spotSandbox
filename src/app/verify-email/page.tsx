@@ -6,6 +6,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { FiMail } from "react-icons/fi";
 import { fadeUp, stagger } from "@/lib/motion";
+import { Spinner } from "@/components/Spinner";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
 const OTP_LENGTH = 6;
@@ -187,8 +188,9 @@ function VerifyEmailContent() {
           disabled={loading || otp.length < OTP_LENGTH}
           whileTap={{ scale: 0.98 }}
           onClick={() => handleVerify(otp)}
-          className="w-full bg-primary hover:bg-primary-dark text-white font-semibold py-3.5 rounded-full text-sm transition-colors disabled:opacity-50"
+          className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-dark text-white font-semibold py-3.5 rounded-full text-sm transition-colors disabled:opacity-50"
         >
+          {loading && <Spinner />}
           {loading ? "Verifying…" : "Verify Email"}
         </motion.button>
 
@@ -202,8 +204,9 @@ function VerifyEmailContent() {
                 type="button"
                 onClick={handleResend}
                 disabled={resending}
-                className="text-primary font-semibold hover:underline disabled:opacity-60"
+                className="inline-flex items-center gap-1.5 text-primary font-semibold hover:underline disabled:opacity-60"
               >
+                {resending && <Spinner className="w-3.5 h-3.5" />}
                 {resending ? "Sending…" : "Resend code"}
               </button>
             )}

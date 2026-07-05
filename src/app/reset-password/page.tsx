@@ -6,6 +6,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { FiLock, FiEye, FiEyeOff } from "react-icons/fi";
 import { fadeUp, stagger } from "@/lib/motion";
+import { Spinner } from "@/components/Spinner";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
 const OTP_LENGTH = 6;
@@ -217,8 +218,9 @@ function ResetPasswordContent() {
 
           <motion.button
             variants={fadeUp} type="submit" disabled={loading} whileTap={{ scale: 0.98 }}
-            className="w-full bg-primary hover:bg-primary-dark text-white font-semibold py-3.5 rounded-full text-sm transition-colors disabled:opacity-60"
+            className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-dark text-white font-semibold py-3.5 rounded-full text-sm transition-colors disabled:opacity-60"
           >
+            {loading && <Spinner />}
             {loading ? "Resetting…" : "Reset Password"}
           </motion.button>
 

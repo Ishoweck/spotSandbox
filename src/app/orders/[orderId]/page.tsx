@@ -9,6 +9,7 @@ import {
   FiCheck, FiPackage, FiMapPin, FiChevronRight, FiDownload,
   FiTruck, FiClock, FiAlertCircle, FiShoppingBag, FiXCircle, FiCheckCircle,
 } from "react-icons/fi";
+import { Spinner } from "@/components/Spinner";
 import { friendlyError } from "@/lib/errorMessage";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
@@ -424,7 +425,7 @@ export default function OrderPage() {
                           disabled={downloading === itemId}
                           className="flex items-center gap-1.5 bg-primary text-white text-xs font-semibold px-4 py-2 rounded-lg hover:bg-primary-dark disabled:opacity-60 transition-colors flex-shrink-0"
                         >
-                          <FiDownload className="w-3.5 h-3.5" />
+                          {downloading === itemId ? <Spinner className="w-3.5 h-3.5" /> : <FiDownload className="w-3.5 h-3.5" />}
                           {downloading === itemId ? "Downloading…" : "Download"}
                         </button>
                       </div>
@@ -547,7 +548,7 @@ export default function OrderPage() {
                 disabled={completing}
                 className="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold py-3 rounded-xl transition-colors disabled:opacity-60"
               >
-                <FiCheckCircle className="w-4 h-4" />
+                {completing ? <Spinner /> : <FiCheckCircle className="w-4 h-4" />}
                 {completing ? "Confirming…" : "I've Received My Order"}
               </button>
             </div>
