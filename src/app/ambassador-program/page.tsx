@@ -281,26 +281,122 @@ const NIGERIAN_STATES = [
 
 type AmbassadorType = "student" | "state" | "";
 
+const BASE_ID_TYPES = [
+  { value: "nin", label: "NIN (National ID Number)" },
+  { value: "drivers_license", label: "Driver's License" },
+  { value: "international_passport", label: "International Passport" },
+];
+const STUDENT_ID_TYPE = { value: "student_id", label: "Student ID Card" };
+
+/** Downscales an image file client-side and returns a base64 data URI, so uploads stay small. */
+function resizeImageFile(file: File, maxDim = 1280, quality = 0.82): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.round(img.width * scale);
+      canvas.height = Math.round(img.height * scale);
+      const ctx = canvas.getContext("2d");
+      URL.revokeObjectURL(url);
+      if (!ctx) { reject(new Error("canvas_unavailable")); return; }
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      resolve(canvas.toDataURL("image/jpeg", quality));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("image_load_failed")); };
+    img.src = url;
+  });
+}
+
 function ApplyModal({ preselected, onClose }: { preselected: AmbassadorType; onClose: () => void }) {
   const [type, setType]       = useState<AmbassadorType>(preselected);
-  const [form, setForm]       = useState({ name: "", email: "", phone: "", location: "", social: "", why: "" });
+  const [form, setForm]       = useState({
+    name: "", email: "", phone: "", location: "", social: "", why: "",
+    homeAddress: "", idType: "", idNumber: "",
+    nokName: "", nokAddress: "", nokPhone: "",
+  });
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [idImage, setIdImage] = useState("");
+  const [imageProcessing, setImageProcessing] = useState(false);
   const [sent, setSent]       = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState("");
 
   const set = (key: keyof typeof form) =>
-    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
       setForm((f) => ({ ...f, [key]: e.target.value }));
+
+  // Students only ever provide a Student ID Card; state ambassadors pick from govt-issued ID.
+  // Either way, a previously uploaded photo won't match the newly selected ID type, so clear it.
+  useEffect(() => {
+    if (type === "student") {
+      setForm((f) => (f.idType === STUDENT_ID_TYPE.value ? f : { ...f, idType: STUDENT_ID_TYPE.value }));
+    } else if (type === "state") {
+      setForm((f) => (f.idType === STUDENT_ID_TYPE.value ? { ...f, idType: "" } : f));
+    }
+    setIdImage("");
+  }, [type]);
+
+  const handleIdTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setForm((f) => ({ ...f, idType: e.target.value }));
+    setIdImage("");
+  };
+
+  const handleIdImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      setError("Please upload an image file (JPG or PNG).");
+      return;
+    }
+    setError("");
+    setImageProcessing(true);
+    try {
+      setIdImage(await resizeImageFile(file));
+    } catch {
+      setError("Could not process that image. Please try a different file.");
+    } finally {
+      setImageProcessing(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError("");
+    if (!form.homeAddress.trim() || !form.idType || !form.idNumber.trim()) {
+      setError("Please complete your home address and means of ID.");
+      return;
+    }
+    if (!idImage) {
+      setError(type === "student" ? "Please upload a photo of your Student ID Card." : "Please upload a photo of your ID.");
+      return;
+    }
+    if (!form.nokName.trim() || !form.nokAddress.trim() || !form.nokPhone.trim()) {
+      setError("Please complete your Next of Kin's name, address, and phone number.");
+      return;
+    }
+    if (!agreedToTerms) {
+      setError("You must accept the Terms and Conditions to apply.");
+      return;
+    }
+    setLoading(true);
     try {
       const res = await fetch("/api/ambassador", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ role: type, ...form }),
+        body: JSON.stringify({
+          role: type,
+          name: form.name, email: form.email, phone: form.phone, location: form.location, social: form.social, why: form.why,
+          homeAddress: form.homeAddress,
+          idType: form.idType,
+          idNumber: form.idNumber,
+          idImage: idImage || undefined,
+          nextOfKinName: form.nokName,
+          nextOfKinAddress: form.nokAddress,
+          nextOfKinPhone: form.nokPhone,
+          agreedToTerms,
+        }),
       });
       if (!res.ok) throw new Error("send_failed");
       setSent(true);
@@ -503,6 +599,85 @@ function ApplyModal({ preselected, onClose }: { preselected: AmbassadorType; onC
                     className={`${inputCls} resize-none`}
                   />
                 </div>
+
+                {/* KYC */}
+                <div className="pt-1">
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Ambassador KYC</p>
+                </div>
+
+                <div>
+                  <label className={labelCls}>Home Address *</label>
+                  <input required type="text" value={form.homeAddress} onChange={set("homeAddress")} placeholder="Your residential address" className={inputCls} />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className={labelCls}>Means of ID *</label>
+                    {type === "student" ? (
+                      <div className={`${inputCls} bg-gray-100 text-gray-500 flex items-center`}>{STUDENT_ID_TYPE.label}</div>
+                    ) : (
+                      <select required value={form.idType} onChange={handleIdTypeChange} className={inputCls}>
+                        <option value="" disabled>Select ID type…</option>
+                        {BASE_ID_TYPES.map((o) => (
+                          <option key={o.value} value={o.value}>{o.label}</option>
+                        ))}
+                      </select>
+                    )}
+                  </div>
+                  <div>
+                    <label className={labelCls}>ID Number *</label>
+                    <input required type="text" value={form.idNumber} onChange={set("idNumber")} placeholder="MAT Number" className={inputCls} />
+                  </div>
+                </div>
+
+                <div>
+                  <label className={labelCls}>{type === "student" ? "Upload Student ID Card *" : "Upload Photo of ID *"}</label>
+                  <div className="flex items-center gap-3">
+                    {idImage && (
+                      <img src={idImage} alt="ID preview" className="w-14 h-14 rounded-lg object-cover border border-gray-200 shrink-0" />
+                    )}
+                    <label className={`${inputCls} flex items-center justify-center cursor-pointer text-center ${idImage ? "text-dark" : "text-gray-400"}`}>
+                      {imageProcessing ? "Processing…" : idImage ? "Change photo" : `Choose a photo of your ${type === "student" ? "Student ID" : "ID"}`}
+                      <input type="file" accept="image/*" onChange={handleIdImageChange} className="hidden" />
+                    </label>
+                  </div>
+                </div>
+
+                <div className="pt-1">
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Next of Kin</p>
+                </div>
+
+                <div>
+                  <label className={labelCls}>Full Name *</label>
+                  <input required type="text" value={form.nokName} onChange={set("nokName")} placeholder="Next of kin's name" className={inputCls} />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className={labelCls}>Address *</label>
+                    <input required type="text" value={form.nokAddress} onChange={set("nokAddress")} placeholder="Next of kin's address" className={inputCls} />
+                  </div>
+                  <div>
+                    <label className={labelCls}>Phone Number *</label>
+                    <input required type="tel" value={form.nokPhone} onChange={set("nokPhone")} placeholder="+234 800 000 0000" className={inputCls} />
+                  </div>
+                </div>
+
+                <label className="flex items-start gap-2.5 pt-1 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={agreedToTerms}
+                    onChange={(e) => setAgreedToTerms(e.target.checked)}
+                    required
+                    className="mt-0.5 w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary/30"
+                  />
+                  <span className="text-xs text-gray-500 leading-relaxed">
+                    I agree to the Vendorspot Ambassador{" "}
+                    <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Terms and Conditions</a>
+                    {" "}and{" "}
+                    <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Privacy Policy</a>.
+                  </span>
+                </label>
 
                 {error && (
                   <div className="flex items-start gap-2 bg-red-50 text-red-500 text-xs px-4 py-3 rounded-xl leading-relaxed">

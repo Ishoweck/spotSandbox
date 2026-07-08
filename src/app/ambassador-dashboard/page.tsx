@@ -9,7 +9,7 @@ import FooterMini from "@/components/FooterMini";
 import { fadeUp } from "@/lib/motion";
 import {
   FiCopy, FiCheck, FiTrendingUp, FiUsers, FiDollarSign,
-  FiAward, FiExternalLink, FiShoppingBag, FiShare2,
+  FiAward, FiExternalLink, FiShoppingBag, FiShare2, FiSmartphone,
 } from "react-icons/fi";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
@@ -424,6 +424,19 @@ export default function AmbassadorDashboard() {
                 <p className="text-xs text-gray-400 mt-0.5">{label}</p>
               </div>
             ))}
+          </motion.div>
+
+          {/* Withdrawal notice */}
+          <motion.div
+            variants={fadeUp} initial="hidden" animate="visible" transition={{ delay: 0.1 }}
+            className="flex items-start gap-3 rounded-2xl px-5 py-4 mb-6"
+            style={{ backgroundColor: `${BRAND}0d`, border: `1px solid ${BRAND}22` }}
+          >
+            <FiSmartphone className="w-4 h-4 mt-0.5 shrink-0" style={{ color: BRAND }} />
+            <p className="text-xs text-gray-600 leading-relaxed">
+              <span className="font-bold text-gray-800">Earnings can only be withdrawn from the Vendorspot mobile app.</span>{" "}
+              This website only tracks your referrals and progress — download the app to cash out your balance.
+            </p>
           </motion.div>
 
           <hr className="border-gray-200 mb-6" />

@@ -299,17 +299,19 @@ export default function SignupPage() {
                 )}
               </div>
 
-              {/* How did you hear */}
-              <div className="relative">
-                <FiChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                <select
-                  value={hear} onChange={(e) => setHear(e.target.value)}
-                  className="w-full pl-4 pr-10 py-3 rounded-xl border border-gray-200 bg-gray-50 text-sm text-gray-400 focus:outline-none focus:border-primary focus:bg-white transition-colors appearance-none"
-                >
-                  <option value="" disabled>How did you hear about Vendorspot?</option>
-                  {hearOptions.map((o) => <option key={o} value={o} className="text-dark">{o}</option>)}
-                </select>
-              </div>
+              {/* How did you hear — skipped when they arrived via a referral link, since we already know */}
+              {!referralCode && (
+                <div className="relative">
+                  <FiChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                  <select
+                    value={hear} onChange={(e) => setHear(e.target.value)}
+                    className="w-full pl-4 pr-10 py-3 rounded-xl border border-gray-200 bg-gray-50 text-sm text-gray-400 focus:outline-none focus:border-primary focus:bg-white transition-colors appearance-none"
+                  >
+                    <option value="" disabled>How did you hear about Vendorspot?</option>
+                    {hearOptions.map((o) => <option key={o} value={o} className="text-dark">{o}</option>)}
+                  </select>
+                </div>
+              )}
 
               {/* Referral / Ambassador Code */}
               <div className="relative">
@@ -372,10 +374,13 @@ export default function SignupPage() {
           )}
         </AnimatePresence>
 
-        <p className="text-center text-sm text-gray-500 mt-6">
-          Already have an account?{" "}
-          <Link href="/login" className="text-primary font-semibold hover:underline">Log in</Link>
-        </p>
+        {/* Skipped for vendor signups (app-download prompt, not a form) and referral-link arrivals (fresh invites) */}
+        {role === "customer" && !referralCode && (
+          <p className="text-center text-sm text-gray-500 mt-6">
+            Already have an account?{" "}
+            <Link href="/login" className="text-primary font-semibold hover:underline">Log in</Link>
+          </p>
+        )}
       </motion.div>
 
       {/* Bottom */}
