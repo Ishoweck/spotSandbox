@@ -285,7 +285,7 @@ export default function AmbassadorDashboard() {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const referralLink = data
-    ? `https://vendorspotng.com/signup?ref=${data.ambassador.ambassadorCode}`
+    ? `https://vendorspotng.com/affiliate/${data.ambassador.ambassadorCode}`
     : "";
 
   /* ── Loading ── */
