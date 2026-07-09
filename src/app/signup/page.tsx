@@ -143,6 +143,7 @@ export default function SignupPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [hear, setHear] = useState("");
   const [referralCode, setReferralCode] = useState("");
+  const [referralLocked, setReferralLocked] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const { signInWithGoogle, loading: googleLoading, error: googleError } = useGoogleSignIn();
@@ -151,7 +152,10 @@ export default function SignupPage() {
     const params = new URLSearchParams(window.location.search);
     const ref = params.get("ref") || params.get("referral") || params.get("referralCode")
       || sessionStorage.getItem("affiliateCode");
-    if (ref) setReferralCode(ref.toUpperCase());
+    if (ref) {
+      setReferralCode(ref.toUpperCase());
+      setReferralLocked(true);
+    }
   }, []);
 
   const strength = getStrength(password);
@@ -318,9 +322,10 @@ export default function SignupPage() {
               <div className="relative">
                 <FiGift className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                 <input
-                  type="text" value={referralCode} onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
+                  type="text" value={referralCode} onChange={(e) => !referralLocked && setReferralCode(e.target.value.toUpperCase())}
                   placeholder="Referral code (optional)"
-                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-sm text-dark placeholder-gray-400 focus:outline-none focus:border-primary focus:bg-white transition-colors font-mono tracking-wider"
+                  readOnly={referralLocked}
+                  className={`w-full pl-10 pr-4 py-3 rounded-xl border text-sm text-dark placeholder-gray-400 focus:outline-none transition-colors font-mono tracking-wider ${referralLocked ? "border-gray-200 bg-gray-100 cursor-not-allowed text-gray-500" : "border-gray-200 bg-gray-50 focus:border-primary focus:bg-white"}`}
                   autoComplete="off"
                   maxLength={20}
                 />
