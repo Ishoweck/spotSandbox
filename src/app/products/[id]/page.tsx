@@ -154,7 +154,9 @@ export default function ProductDetailPage() {
   }, []);
 
   const openInApp = () => {
-    const ref = new URLSearchParams(window.location.search).get("ref");
+    const ref = new URLSearchParams(window.location.search).get("ref")
+      || sessionStorage.getItem("affiliateCode")
+      || null;
     const deepLink = `vendorspot://products/${id}${ref ? `?ref=${ref}` : ""}`;
     const start = Date.now();
     window.location.href = deepLink;
