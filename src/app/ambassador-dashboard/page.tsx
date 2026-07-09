@@ -547,7 +547,7 @@ export default function AmbassadorDashboard() {
                   <div>
                     <p className="text-xs font-bold text-gray-800 mb-0.5">Vendors</p>
                     <p className="text-xs text-gray-400 leading-relaxed">
-                      40% when their first product is approved, 60% when they make their first sale. Rate: ₦150 / ₦250 / ₦300 depending on your total vendor count.
+                      40% when their first product is approved, 60% when they make their first sale. Plus milestone bonuses: ₦3,000 at 20 vendors · ₦7,500 at 50 · ₦20,000 at 100 · ₦37,500 at 150 · ₦50,000 at 200.
                     </p>
                   </div>
                 </div>
