@@ -149,7 +149,8 @@ export default function SignupPage() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const ref = params.get("ref") || params.get("referral") || params.get("referralCode");
+    const ref = params.get("ref") || params.get("referral") || params.get("referralCode")
+      || sessionStorage.getItem("affiliateCode");
     if (ref) setReferralCode(ref.toUpperCase());
   }, []);
 
