@@ -625,8 +625,8 @@ function ApplyModal({ preselected, onClose }: { preselected: AmbassadorType; onC
                     )}
                   </div>
                   <div>
-                    <label className={labelCls}>ID Number *</label>
-                    <input required type="text" value={form.idNumber} onChange={set("idNumber")} placeholder="MAT Number" className={inputCls} />
+                    <label className={labelCls}>{type === "student" ? "Matric Number *" : "ID Number *"}</label>
+                    <input required type="text" value={form.idNumber} onChange={set("idNumber")} placeholder={type === "student" ? "e.g. MAT/2020/001" : "e.g. NIN-12345678901"} className={inputCls} />
                   </div>
                 </div>
 
