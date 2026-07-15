@@ -5,6 +5,7 @@ import { CartProvider } from "@/lib/CartContext";
 import { ToastProvider } from "@/components/Toast";
 import SupportChat from "@/components/SupportChat";
 import GoogleAnalytics from "@/components/GoogleAnalytics";
+import TikTokPixel from "@/components/TikTokPixel";
 
 const inter = Inter({
   variable: "--font-geist-sans",
@@ -156,6 +157,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   const gaId = process.env.NEXT_PUBLIC_GA_ID ?? "";
+  const tiktokPixelId = process.env.NEXT_PUBLIC_TIKTOK_PIXEL_ID ?? "";
 
   return (
     <html lang="en" className={`${inter.variable} antialiased`}>
@@ -171,6 +173,7 @@ export default function RootLayout({
       </head>
       <body className="min-h-screen flex flex-col" suppressHydrationWarning>
         <GoogleAnalytics gaId={gaId} />
+        <TikTokPixel pixelId={tiktokPixelId} />
         <CartProvider>
           <ToastProvider>
             {children}
