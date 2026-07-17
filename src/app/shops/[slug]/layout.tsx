@@ -3,11 +3,11 @@ import type { Metadata } from "next";
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
 
 export async function generateMetadata(
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ slug: string }> }
 ): Promise<Metadata> {
-  const { id } = await params;
+  const { slug } = await params;
   try {
-    const res = await fetch(`${API_BASE}/vendor/public/${id}`, { next: { revalidate: 3600 } });
+    const res = await fetch(`${API_BASE}/vendor/public/${slug}`, { next: { revalidate: 3600 } });
     const data = await res.json();
     const shop = data?.data?.vendor ?? data?.data ?? data;
 

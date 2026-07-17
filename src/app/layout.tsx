@@ -6,6 +6,8 @@ import { ToastProvider } from "@/components/Toast";
 import SupportChat from "@/components/SupportChat";
 import GoogleAnalytics from "@/components/GoogleAnalytics";
 import TikTokPixel from "@/components/TikTokPixel";
+import FacebookPixel from "@/components/FacebookPixel";
+import GoogleTagManager from "@/components/GoogleTagManager";
 
 const inter = Inter({
   variable: "--font-geist-sans",
@@ -158,6 +160,8 @@ export default function RootLayout({
 }>) {
   const gaId = process.env.NEXT_PUBLIC_GA_ID ?? "";
   const tiktokPixelId = process.env.NEXT_PUBLIC_TIKTOK_PIXEL_ID ?? "";
+  const fbPixelId = process.env.NEXT_PUBLIC_FB_PIXEL_ID ?? "";
+  const gtmId = process.env.NEXT_PUBLIC_GTM_ID ?? "";
 
   return (
     <html lang="en" className={`${inter.variable} antialiased`}>
@@ -174,6 +178,8 @@ export default function RootLayout({
       <body className="min-h-screen flex flex-col" suppressHydrationWarning>
         <GoogleAnalytics gaId={gaId} />
         <TikTokPixel pixelId={tiktokPixelId} />
+        <FacebookPixel pixelId={fbPixelId} />
+        <GoogleTagManager gtmId={gtmId} />
         <CartProvider>
           <ToastProvider>
             {children}

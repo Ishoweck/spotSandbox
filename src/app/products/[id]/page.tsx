@@ -723,7 +723,7 @@ export default function ProductDetailPage() {
                       {shareCopied ? <FiCheck className="w-3.5 h-3.5" /> : <FiShare2 className="w-3.5 h-3.5" />}
                       {shareCopied ? "Copied!" : "Share"}
                     </button>
-                    <Link href={`/shops/${product.vendor?.id}`}
+                    <Link href={`/shops/${product.vendor?.slug ?? product.vendor?.id}`}
                       className="flex-1 flex items-center justify-center gap-1.5 bg-dark rounded-xl py-2 text-xs font-medium text-white hover:bg-gray-800 transition-colors">
                       <FiShoppingCart className="w-3.5 h-3.5" /> Visit
                     </Link>
