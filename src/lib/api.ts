@@ -103,6 +103,7 @@ export async function getProductsByCategory(categoryId: string, limit = 10) {
 export interface VendorProfile {
   id: string;
   _id?: string;
+  slug?: string;
   name: string;
   description: string;
   image: string;

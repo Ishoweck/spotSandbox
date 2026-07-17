@@ -19,6 +19,7 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v
 
 interface VendorDetail {
   id: string;
+  slug?: string;
   businessName: string;
   businessDescription: string;
   businessLogo: string;
@@ -47,7 +48,7 @@ interface Product {
 
 export default function ShopDetailPage() {
   const params = useParams();
-  const id = params?.id as string;
+  const slug = params?.slug as string;
 
   const [vendor, setVendor] = useState<VendorDetail | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
@@ -64,11 +65,11 @@ export default function ShopDetailPage() {
   }, []);
 
   useEffect(() => {
-    if (!id) return;
+    if (!slug) return;
     async function load() {
       try {
         setLoading(true);
-        const res = await fetch(`${API_BASE}/vendor/public/${id}`);
+        const res = await fetch(`${API_BASE}/vendor/public/${slug}`);
         const json = await res.json();
         const v = json.data?.vendor ?? null;
         setVendor(v);
@@ -84,7 +85,7 @@ export default function ShopDetailPage() {
       }
     }
     load();
-  }, [id]);
+  }, [slug]);
 
   const handleFollow = async () => {
     const token = typeof window !== "undefined" ? localStorage.getItem("vendorspot_token") : null;
@@ -92,7 +93,7 @@ export default function ShopDetailPage() {
     setFollowLoading(true);
     try {
       const method = isFollowing ? "DELETE" : "POST";
-      const res = await fetch(`${API_BASE}/vendor/${id}/follow`, {
+      const res = await fetch(`${API_BASE}/vendor/${vendor?.id}/follow`, {
         method,
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       });
@@ -109,7 +110,8 @@ export default function ShopDetailPage() {
   };
 
   const openInApp = () => {
-    const deepLink = `vendorspot://vendor/${id}`;
+    const identifier = vendor?.slug || slug;
+    const deepLink = `vendorspot://shops/${identifier}`;
     window.location.href = deepLink;
     // If the app isn't installed the deep link silently fails, so fall back to the store after 1.5s
     setTimeout(() => {
