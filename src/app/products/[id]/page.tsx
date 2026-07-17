@@ -39,7 +39,7 @@ interface ProductDetail {
   stock: number; inStock: boolean; rating: number; reviews: number;
   tags: string[]; keyFeatures: string[]; specifications: Record<string, string>;
   sizes?: string[]; colors?: string[];
-  vendor: { id: string; name: string; image: string; verified: boolean; isPremium: boolean };
+  vendor: { id: string; slug?: string; name: string; image: string; verified: boolean; isPremium: boolean };
 }
 interface VendorDetail {
   id: string; businessName: string; businessDescription: string;
