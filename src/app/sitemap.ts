@@ -37,11 +37,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     if (productsRes.status === "fulfilled" && productsRes.value.ok) {
       const { data } = await productsRes.value.json();
       const products = Array.isArray(data) ? data : data?.products ?? [];
-      products.forEach((p: { _id?: string; id?: string; updatedAt?: string }) => {
-        const id = p._id || p.id;
-        if (id) {
+      products.forEach((p: { _id?: string; id?: string; slug?: string; updatedAt?: string }) => {
+        const identifier = p.slug || p._id || p.id;
+        if (identifier) {
           dynamicPages.push({
-            url: `${BASE_URL}/products/${id}`,
+            url: `${BASE_URL}/products/${identifier}`,
             lastModified: p.updatedAt ? new Date(p.updatedAt) : new Date(),
             changeFrequency: "daily",
             priority: 0.7,
@@ -53,11 +53,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     if (shopsRes.status === "fulfilled" && shopsRes.value.ok) {
       const { data } = await shopsRes.value.json();
       const shops = Array.isArray(data) ? data : data?.vendors ?? [];
-      shops.forEach((s: { _id?: string; id?: string; updatedAt?: string }) => {
-        const id = s._id || s.id;
-        if (id) {
+      shops.forEach((s: { _id?: string; id?: string; slug?: string; updatedAt?: string }) => {
+        const identifier = s.slug || s._id || s.id;
+        if (identifier) {
           dynamicPages.push({
-            url: `${BASE_URL}/shops/${id}`,
+            url: `${BASE_URL}/shops/${identifier}`,
             lastModified: s.updatedAt ? new Date(s.updatedAt) : new Date(),
             changeFrequency: "weekly",
             priority: 0.6,
