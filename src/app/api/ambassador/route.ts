@@ -75,7 +75,7 @@ export async function POST(req: NextRequest) {
             </table>
 
             <div style="padding:20px;border-top:1px solid #f0f0f0">
-              <p style="margin:0 0 8px;font-weight:600;color:#555;font-size:13px;text-transform:uppercase;letter-spacing:0.05em">Why they want to join</p>
+              <p style="margin:0 0 8px;font-weight:600;color:#555;font-size:13px;text-transform:uppercase;letter-spacing:0.05em">Why Do You Want To Join</p>
               <p style="margin:0;color:#1a1a1a;line-height:1.6;white-space:pre-wrap;font-size:14px">${why}</p>
             </div>
           </div>
