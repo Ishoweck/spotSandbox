@@ -15,6 +15,8 @@ import {
 } from "react-icons/fi";
 import { useCart } from "@/lib/CartContext";
 import { Spinner } from "@/components/Spinner";
+import { fbEvent } from "@/lib/fbpixel";
+import { ttqEvent } from "@/lib/ttpixel";
 import { FaFacebook, FaInstagram, FaWhatsapp } from "react-icons/fa";
 import { FaXTwitter } from "react-icons/fa6";
 
@@ -114,6 +116,18 @@ export default function ProductDetailPage() {
     setCartLoading(true);
     try {
       await addToCart(product.id, { _id: product.id, name: product.name, price: product.price, images: product.images || [] }, 1, variant);
+      fbEvent("AddToCart", {
+        content_ids: [product.id],
+        content_name: product.name,
+        content_type: "product",
+        value: product.price,
+        currency: "NGN",
+      });
+      ttqEvent("AddToCart", {
+        contents: [{ content_id: product.id, content_name: product.name, price: product.price, quantity: 1, content_type: "product" }],
+        value: product.price,
+        currency: "NGN",
+      });
       setAddedToCart(true);
       setTimeout(() => setAddedToCart(false), 1500);
     } finally {
@@ -181,6 +195,18 @@ export default function ProductDetailPage() {
         if (!prod) return;
         setProduct(prod);
         setActiveImage(0);
+        fbEvent("ViewContent", {
+          content_ids: [prod.id],
+          content_name: prod.name,
+          content_type: "product",
+          value: prod.price,
+          currency: "NGN",
+        });
+        ttqEvent("ViewContent", {
+          contents: [{ content_id: prod.id, content_name: prod.name, price: prod.price, quantity: 1, content_type: "product" }],
+          value: prod.price,
+          currency: "NGN",
+        });
         const productId = prod.id;
         if (prod?.vendor?.id) {
           const vRes = await fetch(`${API_BASE}/vendor/public/${prod.vendor.id}`);
@@ -218,6 +244,8 @@ export default function ProductDetailPage() {
       });
       const json = await res.json();
       if (!res.ok || !json.success) { setAskError(json.message || "Failed to submit question."); return; }
+      fbEvent("Contact");
+      ttqEvent("Contact");
       setAskSuccess(true);
       setQuestionText("");
       setTimeout(() => { setShowAskModal(false); setAskSuccess(false); }, 1800);
@@ -435,7 +463,7 @@ export default function ProductDetailPage() {
                 {/* Title + save */}
                 <div className="flex items-start justify-between gap-3 mb-3">
                   <h1 className="text-xl sm:text-2xl font-extrabold text-dark leading-snug">{product.name}</h1>
-                  <button onClick={() => setSaved((s) => !s)}
+                  <button onClick={() => { if (!saved) { fbEvent("AddToWishlist", { content_ids: [product.id], content_name: product.name, value: product.price, currency: "NGN" }); ttqEvent("AddToWishlist", { contents: [{ content_id: product.id, content_name: product.name, price: product.price, quantity: 1 }], value: product.price, currency: "NGN" }); } setSaved((s) => !s); }}
                     className="flex-shrink-0 w-9 h-9 rounded-full border border-gray-200 flex items-center justify-center hover:border-primary transition-colors">
                     <FiHeart className={`w-4 h-4 ${saved ? "fill-primary text-primary" : "text-gray-400"}`} />
                   </button>
@@ -723,7 +751,7 @@ export default function ProductDetailPage() {
                       {shareCopied ? <FiCheck className="w-3.5 h-3.5" /> : <FiShare2 className="w-3.5 h-3.5" />}
                       {shareCopied ? "Copied!" : "Share"}
                     </button>
-                    <Link href={`/shops/${product.vendor?.slug ?? product.vendor?.id}`}
+                    <Link href={`/shops/${product.vendor?.slug}`}
                       className="flex-1 flex items-center justify-center gap-1.5 bg-dark rounded-xl py-2 text-xs font-medium text-white hover:bg-gray-800 transition-colors">
                       <FiShoppingCart className="w-3.5 h-3.5" /> Visit
                     </Link>

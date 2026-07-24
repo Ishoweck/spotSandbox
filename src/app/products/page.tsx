@@ -15,6 +15,8 @@ import {
 import { useApi } from "@/lib/useApi";
 import type { Product, Category } from "@/lib/api";
 import { fadeUp, stagger } from "@/lib/motion";
+import { fbEvent } from "@/lib/fbpixel";
+import { ttqEvent } from "@/lib/ttpixel";
 
 const quickCategories = [
   { label: "Electronics", Icon: FiMonitor,     keywords: ["electronics"] },
@@ -280,6 +282,13 @@ function ProductsPageContent() {
   const [appliedSort, setAppliedSort] = useState("");
   const [appliedCategory, setAppliedCategory] = useState("");
   const [appliedState, setAppliedState] = useState("");
+
+  useEffect(() => {
+    if (urlQuery) {
+      fbEvent("Search", { search_string: urlQuery });
+      ttqEvent("Search", { search_string: urlQuery });
+    }
+  }, [urlQuery]);
 
   const toggleFilter = () => {
     if (!filterOpen) {

@@ -71,9 +71,11 @@ export default function ShopDetailPage() {
         setLoading(true);
         const res = await fetch(`${API_BASE}/vendor/public/${slug}`);
         const json = await res.json();
-        const v = json.data?.vendor ?? null;
+        // API may return { data: { vendor, products } } or flat { data: { ...vendorFields } }
+        const vendorRaw = json.data?.vendor ?? json.data;
+        const v = vendorRaw?.businessName ? vendorRaw : null;
         setVendor(v);
-        setProducts(json.data?.products ?? []);
+        setProducts(json.data?.products ?? vendorRaw?.products ?? []);
         if (v) {
           setIsFollowing(v.isFollowing ?? false);
           setFollowersCount(v.followersCount ?? 0);
