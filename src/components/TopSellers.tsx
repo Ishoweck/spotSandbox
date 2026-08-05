@@ -93,7 +93,7 @@ export default function TopSellers() {
                   </div>
                 ))
               : sellers.map((vendor) => (
-                  <Link key={vendor.id} href={`/shops/${vendor.slug ?? vendor.id}`} className="group flex flex-col items-center shrink-0">
+                  <Link key={vendor.id} href={`/shops/${vendor.slug}`} className="group flex flex-col items-center shrink-0">
                     <motion.div
                       whileHover={{ scale: 1.05, y: -6 }}
                       whileTap={{ scale: 0.97 }}
@@ -144,7 +144,7 @@ export default function TopSellers() {
                   viewport={{ once: true }}
                   transition={{ delay: i * 0.07 }}
                 >
-                  <Link href={`/shops/${vendor.slug ?? vendor.id}`} className="group flex flex-col items-center">
+                  <Link href={`/shops/${vendor.slug}`} className="group flex flex-col items-center">
                     <motion.div
                       whileHover={{ scale: 1.05, y: -6 }}
                       whileTap={{ scale: 0.97 }}

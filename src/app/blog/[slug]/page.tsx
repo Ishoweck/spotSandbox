@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState, useEffect } from "react";
+import { use, useState, useEffect, Fragment } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
@@ -9,6 +9,80 @@ import { FiArrowLeft, FiClock, FiUser, FiArrowRight } from "react-icons/fi";
 import { fadeUp } from "@/lib/motion";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
+
+// Parses inline **bold** and _italic_ markers into React nodes
+function parseInline(text: string): React.ReactNode {
+  const parts: React.ReactNode[] = [];
+  const re = /\*\*([^*]+)\*\*|_([^_]+)_/g;
+  let cur = 0;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text)) !== null) {
+    if (m.index > cur) parts.push(text.slice(cur, m.index));
+    if (m[1] !== undefined) parts.push(<strong key={m.index}>{m[1]}</strong>);
+    else if (m[2] !== undefined) parts.push(<em key={m.index}>{m[2]}</em>);
+    cur = m.index + m[0].length;
+  }
+  if (cur < text.length) parts.push(text.slice(cur));
+  if (parts.length === 0) return text;
+  return <>{parts}</>;
+}
+
+// Converts plain-text blog content (blank-line paragraphs, **Heading**, - lists) to React nodes
+function renderContent(raw: string): React.ReactNode[] {
+  if (!raw) return [];
+  return raw.split(/\n{2,}/).flatMap((block, bi): React.ReactNode[] => {
+    const trimmed = block.trim();
+    if (!trimmed) return [];
+    const lines = trimmed.split("\n");
+
+    // Block heading: entire block is **Heading**
+    if (lines.length === 1 && /^\*\*[^*]+\*\*$/.test(trimmed)) {
+      return [
+        <h3 key={bi} className="text-base sm:text-lg font-bold text-dark mt-8 mb-3">
+          {trimmed.slice(2, -2)}
+        </h3>,
+      ];
+    }
+
+    // Unordered list
+    if (lines.every((l) => /^[-•*] /.test(l.trim()))) {
+      return [
+        <ul key={bi} className="list-disc pl-5 mb-4 space-y-1.5">
+          {lines.map((l, li) => (
+            <li key={li} className="text-gray-600 text-sm sm:text-base leading-relaxed">
+              {parseInline(l.trim().replace(/^[-•*] /, ""))}
+            </li>
+          ))}
+        </ul>,
+      ];
+    }
+
+    // Ordered list
+    if (lines.every((l) => /^\d+\. /.test(l.trim()))) {
+      return [
+        <ol key={bi} className="list-decimal pl-5 mb-4 space-y-1.5">
+          {lines.map((l, li) => (
+            <li key={li} className="text-gray-600 text-sm sm:text-base leading-relaxed">
+              {parseInline(l.trim().replace(/^\d+\. /, ""))}
+            </li>
+          ))}
+        </ol>,
+      ];
+    }
+
+    // Regular paragraph — single newlines become <br />
+    return [
+      <p key={bi} className="text-gray-600 text-sm sm:text-base leading-relaxed mb-4">
+        {lines.map((l, li) => (
+          <Fragment key={li}>
+            {li > 0 && <br />}
+            {parseInline(l)}
+          </Fragment>
+        ))}
+      </p>,
+    ];
+  });
+}
 
 const CATEGORY_COLOR: Record<string, string> = {
   "Tips & Guides":  "bg-blue-500",
@@ -145,25 +219,8 @@ export default function BlogPostPage({ params }: { params: Promise<{ slug: strin
                 </p>
               )}
 
-              {post.content ? (
-                <div
-                  className="prose prose-sm sm:prose max-w-none text-gray-600 leading-relaxed"
-                  dangerouslySetInnerHTML={{ __html: post.content }}
-                />
-              ) : post.body ? (
-                post.body.map((line, i) => {
-                  if (line.startsWith("**") && line.endsWith("**")) {
-                    return <h3 key={i} className="text-base sm:text-lg font-bold text-dark mt-8 mb-3">{line.slice(2, -2)}</h3>;
-                  }
-                  if (line.includes("\n")) {
-                    return (
-                      <div key={i} className="text-gray-600 text-sm sm:text-base leading-relaxed mb-4 space-y-2">
-                        {line.split("\n").map((sub, j) => <p key={j}>{sub}</p>)}
-                      </div>
-                    );
-                  }
-                  return <p key={i} className="text-gray-600 text-sm sm:text-base leading-relaxed mb-4">{line}</p>;
-                })
+              {(post.content || (post.body && post.body.length > 0)) ? (
+                <div>{renderContent(post.content ?? post.body!.join("\n\n"))}</div>
               ) : null}
             </motion.div>
 

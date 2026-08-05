@@ -8,6 +8,8 @@ import { fadeUp, stagger } from "@/lib/motion";
 import { useGoogleSignIn } from "@/lib/useGoogleSignIn";
 import { detectOS, openAppOrStore, APP_STORE_URL, PLAY_STORE_URL, type OS } from "@/lib/appStore";
 import { Spinner } from "@/components/Spinner";
+import { fbEvent } from "@/lib/fbpixel";
+import { ttqEvent } from "@/lib/ttpixel";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
 
@@ -174,6 +176,8 @@ export default function SignupPage() {
       });
       const json = await res.json();
       if (!res.ok || !json.success) { setError(json.message || "Registration failed. Please try again."); return; }
+      fbEvent("CompleteRegistration");
+      ttqEvent("CompleteRegistration");
       window.location.href = `/verify-email?email=${encodeURIComponent(email)}`;
     } catch {
       setError("Something went wrong. Please try again.");
