@@ -6,8 +6,13 @@
         "appID": "J7UYR27PAZ.com.vendorspotng.vendorspot",
         "paths": [
           "/vendor/*",
+          "/vendors/*",
+          "/shops/*",
+          "/shop/*",
           "/products/*",
-          "/affiliate/*"
+          "/product/*",
+          "/affiliate/*",
+          "/blog/*"
         ]
       }
     ]
