@@ -3,9 +3,11 @@ import type { Metadata } from "next";
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
 const BASE_URL = "https://vendorspotng.com";
 
-async function getProduct(id: string) {
+// Backend GET /products/:id accepts either slug or ObjectId, so the same
+// helper works for both new slug URLs and legacy ObjectId URLs (ads etc.).
+async function getProduct(slugOrId: string) {
   try {
-    const res = await fetch(`${API_BASE}/products/${id}`, { next: { revalidate: 3600 } });
+    const res = await fetch(`${API_BASE}/products/${slugOrId}`, { next: { revalidate: 3600 } });
     const data = await res.json();
     return data?.data ?? data;
   } catch {
@@ -14,11 +16,11 @@ async function getProduct(id: string) {
 }
 
 export async function generateMetadata(
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ slug: string }> }
 ): Promise<Metadata> {
-  const { id } = await params;
+  const { slug } = await params;
   try {
-    const product = await getProduct(id);
+    const product = await getProduct(slug);
     const image = product?.images?.[0] ?? "";
     const price = product?.price ? `₦${Number(product.price).toLocaleString()}` : "";
 
@@ -26,7 +28,7 @@ export async function generateMetadata(
       title: `${product?.name ?? "Product"} — Vendorspot`,
       description: product?.description ?? `Buy ${product?.name} on Vendorspot. ${price}. Secure escrow payment. 100% refund guarantee.`,
       alternates: {
-        canonical: `${BASE_URL}/products/${product?.slug || id}`,
+        canonical: `${BASE_URL}/products/${product?.slug || slug}`,
       },
       openGraph: {
         title: `${product?.name ?? "Product"} — Vendorspot`,
@@ -48,10 +50,10 @@ export async function generateMetadata(
 }
 
 export default async function ProductLayout(
-  { children, params }: { children: React.ReactNode; params: Promise<{ id: string }> }
+  { children, params }: { children: React.ReactNode; params: Promise<{ slug: string }> }
 ) {
-  const { id } = await params;
-  const product = await getProduct(id);
+  const { slug } = await params;
+  const product = await getProduct(slug);
 
   const productJsonLd = product ? {
     "@context": "https://schema.org",
@@ -63,7 +65,7 @@ export default async function ProductLayout(
     brand: { "@type": "Brand", name: product.vendor?.name || "Vendorspot" },
     offers: {
       "@type": "Offer",
-      url: `${BASE_URL}/products/${product.slug || id}`,
+      url: `${BASE_URL}/products/${product.slug || slug}`,
       priceCurrency: "NGN",
       price: product.price,
       availability: product.inStock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -71,7 +71,11 @@ function StarRating({ rating }: { rating: number }) {
 
 export default function ProductDetailPage() {
   const params = useParams();
-  const id = params?.id as string;
+  const router = useRouter();
+  // Route param is a slug now, but stays backwards-compatible with legacy
+  // /products/<objectId> URLs (ads, external links) because the backend's
+  // GET /products/:id endpoint accepts both slug and ObjectId.
+  const id = (params?.slug ?? params?.id) as string;
 
   useEffect(() => {
     const ref = new URLSearchParams(window.location.search).get("ref");
@@ -171,7 +175,10 @@ export default function ProductDetailPage() {
     const ref = new URLSearchParams(window.location.search).get("ref")
       || sessionStorage.getItem("affiliateCode")
       || null;
-    const deepLink = `vendorspot://products/${id}${ref ? `?ref=${ref}` : ""}`;
+    // Prefer the loaded product's canonical slug so the mobile deep-link
+     // is always shareable; fall back to whatever we have in the URL.
+     const target = product?.slug || id;
+     const deepLink = `vendorspot://products/${target}${ref ? `?ref=${ref}` : ""}`;
     const start = Date.now();
     window.location.href = deepLink;
     setTimeout(() => {
@@ -208,8 +215,9 @@ export default function ProductDetailPage() {
           currency: "NGN",
         });
         const productId = prod.id;
-        if (prod?.vendor?.id) {
-          const vRes = await fetch(`${API_BASE}/vendor/public/${prod.vendor.id}`);
+        if (prod?.vendor?.id || prod?.vendor?.slug) {
+          const vendorRef = prod.vendor.slug || prod.vendor.id;
+          const vRes = await fetch(`${API_BASE}/vendor/public/${vendorRef}`);
           const vJson = await vRes.json();
           setVendor(vJson.data?.vendor ?? null);
         }
@@ -230,6 +238,17 @@ export default function ProductDetailPage() {
     }
     load();
   }, [id]);
+
+  // Canonical redirect: if URL currently uses ObjectId (legacy ad link) but
+  // the loaded product has a slug, quietly swap the URL to the slug form.
+  // Preserves the ?ref= affiliate query. router.replace = no history entry.
+  useEffect(() => {
+    if (!product?.slug) return;
+    const isObjectId = /^[a-f\d]{24}$/i.test(id);
+    if (!isObjectId || id === product.slug) return;
+    const search = typeof window !== "undefined" ? window.location.search : "";
+    router.replace(`/products/${product.slug}${search}`);
+  }, [id, product?.slug, router]);
 
   const handleAskQuestion = async () => {
     const token = localStorage.getItem("vendorspot_token");
