@@ -41,7 +41,8 @@ export default function ProductCard(props: ProductCardProps) {
   // Backend uses _id; some list responses also include id — prefer _id
   const productId = _id || id || "";
   // Prefer the SEO-friendly slug for the link; cart operations still use the real ID.
-  // Legacy /products/<objectId> still works because the backend GET /products/:id accepts both.
+  // Legacy /products/<objectId> still works because the backend GET /products/:id accepts both,
+  // and the [slug]/page.tsx canonical redirect swaps ObjectId URLs to slug URLs after load.
   const href = slug ? `/products/${slug}` : productId ? `/products/${productId}` : "#";
 
   const { addToCart } = useCart();
