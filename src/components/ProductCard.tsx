@@ -40,7 +40,10 @@ export default function ProductCard(props: ProductCardProps) {
   const productImage = images && images.length > 0 ? images[0] : null;
   // Backend uses _id; some list responses also include id — prefer _id
   const productId = _id || id || "";
-  const href = productId ? `/products/${productId}` : slug ? `/products/${slug}` : "#";
+  // Prefer slug in URLs so shared links and ads use human-readable, stable
+  // paths. Legacy /products/<objectId> still works because the backend
+  // GET /products/:id endpoint accepts both.
+  const href = slug ? `/products/${slug}` : productId ? `/products/${productId}` : "#";
 
   const { addToCart } = useCart();
   const { toast } = useToast();

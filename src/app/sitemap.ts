@@ -37,11 +37,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     if (productsRes.status === "fulfilled" && productsRes.value.ok) {
       const { data } = await productsRes.value.json();
       const products = Array.isArray(data) ? data : data?.products ?? [];
-      products.forEach((p: { _id?: string; id?: string; updatedAt?: string }) => {
-        const id = p._id || p.id;
-        if (id) {
+      products.forEach((p: { _id?: string; id?: string; slug?: string; updatedAt?: string }) => {
+        // Prefer slug for stable, shareable, ad-friendly URLs. Fall back to
+        // ObjectId only for legacy products that somehow lost their slug.
+        const identifier = p.slug || p._id || p.id;
+        if (identifier) {
           dynamicPages.push({
-            url: `${BASE_URL}/products/${id}`,
+            url: `${BASE_URL}/products/${identifier}`,
             lastModified: p.updatedAt ? new Date(p.updatedAt) : new Date(),
             changeFrequency: "daily",
             priority: 0.7,
