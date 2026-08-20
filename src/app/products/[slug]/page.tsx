@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -15,6 +15,8 @@ import {
 } from "react-icons/fi";
 import { useCart } from "@/lib/CartContext";
 import { Spinner } from "@/components/Spinner";
+import { fbEvent } from "@/lib/fbpixel";
+import { ttqEvent } from "@/lib/ttpixel";
 import { FaFacebook, FaInstagram, FaWhatsapp } from "react-icons/fa";
 import { FaXTwitter } from "react-icons/fa6";
 
@@ -69,7 +71,11 @@ function StarRating({ rating }: { rating: number }) {
 
 export default function ProductDetailPage() {
   const params = useParams();
-  const id = params?.id as string;
+  const router = useRouter();
+  // Route param is a slug now, but stays backwards-compatible with legacy
+  // /products/<objectId> URLs (ads, external links) because the backend's
+  // GET /products/:id endpoint accepts both slug and ObjectId.
+  const id = (params?.slug ?? params?.id) as string;
 
   useEffect(() => {
     const ref = new URLSearchParams(window.location.search).get("ref");
@@ -114,6 +120,18 @@ export default function ProductDetailPage() {
     setCartLoading(true);
     try {
       await addToCart(product.id, { _id: product.id, name: product.name, price: product.price, images: product.images || [] }, 1, variant);
+      fbEvent("AddToCart", {
+        content_ids: [product.id],
+        content_name: product.name,
+        content_type: "product",
+        value: product.price,
+        currency: "NGN",
+      });
+      ttqEvent("AddToCart", {
+        contents: [{ content_id: product.id, content_name: product.name, price: product.price, quantity: 1, content_type: "product" }],
+        value: product.price,
+        currency: "NGN",
+      });
       setAddedToCart(true);
       setTimeout(() => setAddedToCart(false), 1500);
     } finally {
@@ -157,7 +175,10 @@ export default function ProductDetailPage() {
     const ref = new URLSearchParams(window.location.search).get("ref")
       || sessionStorage.getItem("affiliateCode")
       || null;
-    const deepLink = `vendorspot://products/${id}${ref ? `?ref=${ref}` : ""}`;
+    // Prefer the loaded product's canonical slug so the mobile deep-link
+     // is always shareable; fall back to whatever we have in the URL.
+     const target = product?.slug || id;
+     const deepLink = `vendorspot://products/${target}${ref ? `?ref=${ref}` : ""}`;
     const start = Date.now();
     window.location.href = deepLink;
     setTimeout(() => {
@@ -181,9 +202,22 @@ export default function ProductDetailPage() {
         if (!prod) return;
         setProduct(prod);
         setActiveImage(0);
+        fbEvent("ViewContent", {
+          content_ids: [prod.id],
+          content_name: prod.name,
+          content_type: "product",
+          value: prod.price,
+          currency: "NGN",
+        });
+        ttqEvent("ViewContent", {
+          contents: [{ content_id: prod.id, content_name: prod.name, price: prod.price, quantity: 1, content_type: "product" }],
+          value: prod.price,
+          currency: "NGN",
+        });
         const productId = prod.id;
-        if (prod?.vendor?.id) {
-          const vRes = await fetch(`${API_BASE}/vendor/public/${prod.vendor.id}`);
+        if (prod?.vendor?.id || prod?.vendor?.slug) {
+          const vendorRef = prod.vendor.slug || prod.vendor.id;
+          const vRes = await fetch(`${API_BASE}/vendor/public/${vendorRef}`);
           const vJson = await vRes.json();
           setVendor(vJson.data?.vendor ?? null);
         }
@@ -205,6 +239,17 @@ export default function ProductDetailPage() {
     load();
   }, [id]);
 
+  // Canonical redirect: if URL currently uses ObjectId (legacy ad link) but
+  // the loaded product has a slug, quietly swap the URL to the slug form.
+  // Preserves the ?ref= affiliate query. router.replace = no history entry.
+  useEffect(() => {
+    if (!product?.slug) return;
+    const isObjectId = /^[a-f\d]{24}$/i.test(id);
+    if (!isObjectId || id === product.slug) return;
+    const search = typeof window !== "undefined" ? window.location.search : "";
+    router.replace(`/products/${product.slug}${search}`);
+  }, [id, product?.slug, router]);
+
   const handleAskQuestion = async () => {
     const token = localStorage.getItem("vendorspot_token");
     if (!token) { setAskError("Please log in to ask a question."); return; }
@@ -218,6 +263,8 @@ export default function ProductDetailPage() {
       });
       const json = await res.json();
       if (!res.ok || !json.success) { setAskError(json.message || "Failed to submit question."); return; }
+      fbEvent("Contact");
+      ttqEvent("Contact");
       setAskSuccess(true);
       setQuestionText("");
       setTimeout(() => { setShowAskModal(false); setAskSuccess(false); }, 1800);
@@ -435,7 +482,7 @@ export default function ProductDetailPage() {
                 {/* Title + save */}
                 <div className="flex items-start justify-between gap-3 mb-3">
                   <h1 className="text-xl sm:text-2xl font-extrabold text-dark leading-snug">{product.name}</h1>
-                  <button onClick={() => setSaved((s) => !s)}
+                  <button onClick={() => { if (!saved) { fbEvent("AddToWishlist", { content_ids: [product.id], content_name: product.name, value: product.price, currency: "NGN" }); ttqEvent("AddToWishlist", { contents: [{ content_id: product.id, content_name: product.name, price: product.price, quantity: 1 }], value: product.price, currency: "NGN" }); } setSaved((s) => !s); }}
                     className="flex-shrink-0 w-9 h-9 rounded-full border border-gray-200 flex items-center justify-center hover:border-primary transition-colors">
                     <FiHeart className={`w-4 h-4 ${saved ? "fill-primary text-primary" : "text-gray-400"}`} />
                   </button>
@@ -723,7 +770,7 @@ export default function ProductDetailPage() {
                       {shareCopied ? <FiCheck className="w-3.5 h-3.5" /> : <FiShare2 className="w-3.5 h-3.5" />}
                       {shareCopied ? "Copied!" : "Share"}
                     </button>
-                    <Link href={`/shops/${product.vendor?.slug ?? product.vendor?.id}`}
+                    <Link href={`/shops/${product.vendor?.slug}`}
                       className="flex-1 flex items-center justify-center gap-1.5 bg-dark rounded-xl py-2 text-xs font-medium text-white hover:bg-gray-800 transition-colors">
                       <FiShoppingCart className="w-3.5 h-3.5" /> Visit
                     </Link>

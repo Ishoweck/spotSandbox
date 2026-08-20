@@ -78,6 +78,24 @@ export default function CheckoutPage() {
     setIsAuthed(!!getToken());
   }, []);
 
+  useEffect(() => {
+    if (isAuthed && itemCount > 0) {
+      fbEvent("InitiateCheckout", {
+        value: cart.subtotal,
+        currency: "NGN",
+        num_items: itemCount,
+        content_ids: cart.items.map((i) => i.product._id),
+        content_type: "product",
+      });
+      ttqEvent("InitiateCheckout", {
+        contents: cart.items.map((i) => ({ content_id: i.product._id, content_name: i.product.name, price: i.price, quantity: i.quantity, content_type: "product" })),
+        value: cart.subtotal,
+        currency: "NGN",
+        num_items: itemCount,
+      });
+    }
+  }, [isAuthed]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const handleGuestContinue = async () => {
     if (!guestEmail.trim() || !guestEmail.includes("@")) {
       toast("Please enter a valid email address.", "warning");
@@ -418,6 +436,19 @@ export default function CheckoutPage() {
         const json = await res.json();
         if (json.success) {
           sessionStorage.removeItem("affiliateCode");
+          fbEvent("Purchase", {
+            value: grandTotal,
+            currency: "NGN",
+            num_items: itemCount,
+            content_ids: cart.items.map((i) => i.product._id),
+            content_type: "product",
+          });
+          ttqEvent("CompletePayment", {
+            contents: cart.items.map((i) => ({ content_id: i.product._id, content_name: i.product.name, price: i.price, quantity: i.quantity, content_type: "product" })),
+            value: grandTotal,
+            currency: "NGN",
+            num_items: itemCount,
+          });
           await clearCart();
           const orderId = json.data?.order?._id || "new";
           router.push(`/orders/${orderId}?confirmed=true`);

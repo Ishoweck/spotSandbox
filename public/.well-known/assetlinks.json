@@ -5,7 +5,8 @@
       "namespace": "android_app",
       "package_name": "com.vendorspot.app",
       "sha256_cert_fingerprints": [
-        "6C:B8:28:6F:B8:63:0F:45:85:C7:13:6A:B7:FE:78:90:6C:74:0C:75:6A:DE:A0:81:0A:08:B0:8E:78:DC:31:3C"
+        "6C:B8:28:6F:B8:63:0F:45:85:C7:13:6A:B7:FE:78:90:6C:74:0C:75:6A:DE:A0:81:0A:08:B0:8E:78:DC:31:3C",
+        "EF:62:4E:F9:D3:0B:6E:2F:E8:2B:12:E2:03:68:5A:33:21:54:40:F2:FE:80:1D:F2:7A:AD:17:F4:56:A3:49:D4"
       ]
     }
   }

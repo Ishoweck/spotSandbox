@@ -100,7 +100,7 @@ function ShopCard({ shop, index, compact = false }: { shop: VendorProfile; index
 
   const handleShare = (e: React.MouseEvent) => {
     e.preventDefault();
-    const url = `${window.location.origin}/shops/${shop.slug ?? shop.id}`;
+    const url = `${window.location.origin}/shops/${shop.slug}`;
     if (navigator.share) {
       navigator.share({ title: shop.name, url });
     } else {
@@ -206,7 +206,7 @@ function ShopCard({ shop, index, compact = false }: { shop: VendorProfile; index
 
         {/* shop button */}
         <Link
-          href={`/shops/${shop.slug ?? shop.id}`}
+          href={`/shops/${shop.slug}`}
           className={`flex items-center justify-center gap-1 bg-gray-900 hover:bg-gray-700 rounded-lg text-white font-semibold transition-all ${compact ? "py-1.5 text-[10px] mt-1.5" : "py-2 sm:py-2.5 text-xs gap-1.5 rounded-xl mt-0"}`}
         >
           <FiShoppingBag className={compact ? "w-2.5 h-2.5" : "w-3.5 h-3.5"} />
@@ -455,7 +455,7 @@ export default function ShopsPage() {
                   transition={{ duration: 0.45, delay: 0.1 + i * 0.07 }}
                   className="shrink-0"
                 >
-                  <Link href={`/shops/${vendor.slug ?? vendor.id}`} className="group flex flex-col items-center gap-3">
+                  <Link href={`/shops/${vendor.slug}`} className="group flex flex-col items-center gap-3">
                     <motion.div
                       whileHover={{ scale: 1.12, y: -8 }}
                       whileTap={{ scale: 0.95 }}

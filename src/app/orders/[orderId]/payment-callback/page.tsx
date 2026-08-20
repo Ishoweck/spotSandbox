@@ -7,6 +7,8 @@ import Navbar from "@/components/Navbar";
 import FooterMini from "@/components/FooterMini";
 import { useCart } from "@/lib/CartContext";
 import { FiLoader, FiCheck, FiAlertCircle, FiArrowRight } from "react-icons/fi";
+import { fbEvent } from "@/lib/fbpixel";
+import { ttqEvent } from "@/lib/ttpixel";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
 
@@ -57,6 +59,19 @@ export default function PaymentCallbackPage() {
         const json = await res.json();
         if (json.success) {
           sessionStorage.removeItem("affiliateCode");
+          const orderValue = json.data?.order?.totalAmount ?? json.data?.order?.total ?? 0;
+          const orderItems = json.data?.order?.items?.length ?? 0;
+          fbEvent("Purchase", {
+            value: orderValue,
+            currency: "NGN",
+            num_items: orderItems,
+            content_type: "product",
+          });
+          ttqEvent("CompletePayment", {
+            value: orderValue,
+            currency: "NGN",
+            num_items: orderItems,
+          });
           await clearCart();
           const id = json.data?.order?.orderNumber || json.data?.order?._id || reference;
           setOrderId(id);
