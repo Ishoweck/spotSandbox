@@ -13,6 +13,7 @@ export interface CartProduct {
   price: number;
   images: string[];
   slug?: string;
+  productType?: "physical" | "digital";
 }
 
 export interface CartItem {

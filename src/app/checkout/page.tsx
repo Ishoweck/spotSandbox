@@ -8,9 +8,7 @@ import FooterMini from "@/components/FooterMini";
 import { useCart } from "@/lib/CartContext";
 import { useToast } from "@/components/Toast";
 import { Spinner } from "@/components/Spinner";
-import { FiMapPin, FiTag, FiTruck, FiChevronRight, FiCheck, FiPlus, FiCreditCard, FiLoader, FiPackage, FiAlertCircle, FiShield, FiX } from "react-icons/fi";
-import { fbEvent } from "@/lib/fbpixel";
-import { ttqEvent } from "@/lib/ttpixel";
+import { FiMapPin, FiTag, FiTruck, FiChevronRight, FiCheck, FiPlus, FiCreditCard, FiLoader, FiPackage, FiAlertCircle, FiShield, FiX, FiDownload } from "react-icons/fi";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
 
@@ -169,12 +167,17 @@ export default function CheckoutPage() {
   const [showProtectionInfo, setShowProtectionInfo] = useState(false);
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
 
+  // A cart is "digital-only" when every item is a digital product — no shipping address,
+  // delivery rate, or buyer-protection fee applies in that case (mirrors backend isDigitalOnly logic).
+  const isDigitalOnly = cart.items.length > 0 && cart.items.every((i) => i.product.productType === "digital");
+  const readyForTotals = isDigitalOnly || !!selectedRate;
+
   const selectedAddress = addresses.find((a) => a._id === selectedAddressId);
-  const shippingCost = selectedRate?.price ?? 0;
+  const shippingCost = isDigitalOnly ? 0 : (selectedRate?.price ?? 0);
   const baseTotal = Math.max(0, cart.subtotal - cart.discount + shippingCost);
-  const buyerProtectionFee = selectedRate ? calcBuyerProtectionFee(baseTotal) : 0;
+  const buyerProtectionFee = readyForTotals && !isDigitalOnly ? calcBuyerProtectionFee(baseTotal) : 0;
   const orderTotal = baseTotal + buyerProtectionFee;
-  const gatewayFee = selectedRate ? calcGatewayFee(orderTotal, paymentMethod) : 0;
+  const gatewayFee = readyForTotals ? calcGatewayFee(orderTotal, paymentMethod) : 0;
   const grandTotal = orderTotal + gatewayFee;
 
   const loadAddresses = () => {
@@ -204,6 +207,74 @@ export default function CheckoutPage() {
         .catch(() => {});
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Location picker — uses the browser's geolocation + two free, keyless reverse-geocoding
+  // services in parallel, taking the best field from each:
+  //  - BigDataCloud: reliable city/state (administrative-boundary data), weak on street.
+  //  - Nominatim (OSM): decent street/road data, but often misses city in Nigeria.
+  // No API key required either way. The backend already geocodes/validates the final address
+  // via ShipBubble when it's saved, so this is purely a UX shortcut to fill the form.
+  const [locating, setLocating] = useState(false);
+
+  const handleUseMyLocation = () => {
+    if (!navigator.geolocation) {
+      toast("Your browser doesn't support location detection.", "warning");
+      return;
+    }
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          const { latitude, longitude } = position.coords;
+          const [bdcResult, nominatimResult] = await Promise.allSettled([
+            fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`).then((r) => r.json()),
+            fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}&addressdetails=1&accept-language=en`).then((r) => r.json()),
+          ]);
+
+          const bdc = bdcResult.status === "fulfilled" ? bdcResult.value : null;
+          const nomAddr = nominatimResult.status === "fulfilled" ? (nominatimResult.value.address || {}) : {};
+
+          // BigDataCloud's `city` field is a broad metro label that can repeat the state name
+          // (e.g. "Lagos" for the whole metro area) — `locality` or the most specific entry in
+          // `administrative` gives the actual LGA/area (e.g. "Shomolu"), which is what Nigerian
+          // delivery/shipping actually keys off. Only fall back to `city` as a last resort.
+          const admins: Array<{ name: string }> = bdc?.localityInfo?.administrative || [];
+          const mostSpecificAdmin = admins.length > 0 ? admins[admins.length - 1]?.name : "";
+          const state = bdc?.principalSubdivision || nomAddr.state || "";
+
+          const street = [nomAddr.house_number, nomAddr.road].filter(Boolean).join(" ") || nomAddr.neighbourhood || nomAddr.suburb || "";
+          const city =
+            bdc?.locality ||
+            (mostSpecificAdmin && mostSpecificAdmin !== state ? mostSpecificAdmin : "") ||
+            nomAddr.city || nomAddr.town || nomAddr.village || nomAddr.county ||
+            (bdc?.city && bdc.city !== state ? bdc.city : "");
+
+          if (!city && !state) throw new Error("no_results");
+
+          setAddressForm((prev) => ({
+            ...prev,
+            street: street || prev.street,
+            city: city || prev.city,
+            state: state || prev.state,
+          }));
+          toast("Location detected — please confirm the details below.", "success");
+        } catch {
+          toast("Could not determine your address from location. Please enter it manually.", "error");
+        } finally {
+          setLocating(false);
+        }
+      },
+      (error) => {
+        setLocating(false);
+        const message =
+          error.code === error.PERMISSION_DENIED
+            ? "Location access denied. Please enter your address manually."
+            : "Could not get your location. Please enter your address manually.";
+        toast(message, "warning");
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
 
   const handleSaveAddress = async () => {
     if (!addressForm.street || !addressForm.city || !addressForm.state || !addressForm.fullName || !addressForm.phone) {
@@ -292,18 +363,21 @@ export default function CheckoutPage() {
     }
   }, [selectedAddress]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Auto-fetch rates whenever the selected address changes
+  // Auto-fetch rates whenever the selected address changes (skip entirely for digital-only carts)
   useEffect(() => {
+    if (isDigitalOnly) return;
     if (!selectedAddressId || loadingAddresses) return;
     if (selectedAddressId === lastFetchedAddressId.current) return;
     lastFetchedAddressId.current = selectedAddressId;
     handleCalculateRates();
-  }, [selectedAddressId, loadingAddresses]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [selectedAddressId, loadingAddresses, isDigitalOnly]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handlePlaceOrder = async () => {
-    if (!selectedAddress) { toast("Please select a delivery address.", "warning"); return; }
-    if (!selectedRate) { toast("Please select a shipping option.", "warning"); return; }
     if (cart.items.length === 0) { toast("Your cart is empty.", "warning"); return; }
+    if (!isDigitalOnly) {
+      if (!selectedAddress) { toast("Please select a delivery address.", "warning"); return; }
+      if (!selectedRate) { toast("Please select a shipping option.", "warning"); return; }
+    }
 
     setPlacingOrder(true);
     try {
@@ -311,19 +385,22 @@ export default function CheckoutPage() {
       const pendingAffiliateCode = sessionStorage.getItem("affiliateCode") || undefined;
 
       const body: Record<string, unknown> = {
-        shippingAddress: {
-          street: selectedAddress.street,
-          city: selectedAddress.city,
-          state: selectedAddress.state,
-          country: selectedAddress.country || "Nigeria",
-        },
         paymentMethod,
-        deliveryType: selectedRate.type,
-        selectedDeliveryPrice: selectedRate.price,
-        selectedCourier: selectedRate.courier,
-        vendorBreakdown: selectedRate.vendorBreakdown || [],
+        deliveryType: isDigitalOnly ? "digital" : selectedRate!.type,
         ...(pendingAffiliateCode && { affiliateCode: pendingAffiliateCode }),
       };
+
+      if (!isDigitalOnly) {
+        body.shippingAddress = {
+          street: selectedAddress!.street,
+          city: selectedAddress!.city,
+          state: selectedAddress!.state,
+          country: selectedAddress!.country || "Nigeria",
+        };
+        body.selectedDeliveryPrice = selectedRate!.price;
+        body.selectedCourier = selectedRate!.courier;
+        body.vendorBreakdown = selectedRate!.vendorBreakdown || [];
+      }
 
       if (paymentMethod === "paystack" || paymentMethod === "flutterwave") {
         const res = await fetch(`${API_BASE}/orders/initialize-payment`, {
@@ -441,7 +518,24 @@ export default function CheckoutPage() {
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-6">
                   <h1 className="text-xl sm:text-2xl font-bold text-dark mb-4 sm:mb-6">Checkout</h1>
 
+                  {/* ── Digital-only order notice ── */}
+                  {isDigitalOnly && (
+                    <section className="mb-6">
+                      <div className="flex items-start gap-3 rounded-xl border border-blue-100 bg-blue-50 px-4 py-3.5">
+                        <FiDownload className="w-4 h-4 mt-0.5 shrink-0 text-blue-500" />
+                        <div>
+                          <p className="text-sm font-bold text-dark">Digital order — no shipping needed</p>
+                          <p className="text-xs text-gray-500 mt-0.5">
+                            Your cart contains only digital products. There&apos;s no delivery address or shipping fee — access is granted right after payment.
+                          </p>
+                        </div>
+                      </div>
+                    </section>
+                  )}
+
                   {/* ── Delivery Address ── */}
+                  {!isDigitalOnly && (
+                  <>
                   <section className="mb-6">
                     <div className="flex items-center justify-between mb-4">
                       <p className="text-sm font-bold text-dark flex items-center gap-2">
@@ -493,7 +587,18 @@ export default function CheckoutPage() {
                         {/* Add address form */}
                         {(showAddressForm || addresses.length === 0) && (
                           <div className="border border-gray-200 rounded-xl p-4 space-y-3 bg-gray-50">
-                            <p className="text-xs font-semibold text-dark">New Shipment Address</p>
+                            <div className="flex items-center justify-between">
+                              <p className="text-xs font-semibold text-dark">New Shipment Address</p>
+                              <button
+                                type="button"
+                                onClick={handleUseMyLocation}
+                                disabled={locating}
+                                className="flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline disabled:opacity-60"
+                              >
+                                {locating ? <FiLoader className="w-3.5 h-3.5 animate-spin" /> : <FiMapPin className="w-3.5 h-3.5" />}
+                                {locating ? "Locating…" : "Use my current location"}
+                              </button>
+                            </div>
                             <div className="grid grid-cols-2 gap-2">
                               <input value={addressForm.fullName} onChange={(e) => setAddressForm({ ...addressForm, fullName: e.target.value })} placeholder="Full name" className="col-span-2 border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary bg-white" />
                               <input value={addressForm.phone} onChange={(e) => setAddressForm({ ...addressForm, phone: e.target.value })} placeholder="Phone number" className="col-span-2 border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary bg-white" />
@@ -582,6 +687,8 @@ export default function CheckoutPage() {
                       </div>
                     )}
                   </section>
+                  </>
+                  )}
 
                   {/* ── Payment Method ── */}
                   <section>
@@ -697,8 +804,8 @@ export default function CheckoutPage() {
                     </div>
                     <div className="flex justify-between text-gray-600">
                       <span>Delivery Fee</span>
-                      <span className={`font-medium ${selectedRate ? "text-dark" : "text-gray-400"}`}>
-                        {selectedRate ? `₦${selectedRate.price.toLocaleString()}` : "—"}
+                      <span className={`font-medium ${isDigitalOnly || selectedRate ? "text-dark" : "text-gray-400"}`}>
+                        {isDigitalOnly ? "Free — Digital" : selectedRate ? `₦${selectedRate.price.toLocaleString()}` : "—"}
                       </span>
                     </div>
                     {cart.discount > 0 && (
@@ -728,11 +835,11 @@ export default function CheckoutPage() {
                   </div>
                   <div className="flex justify-between font-bold text-dark text-base mt-4 pt-3 border-t border-gray-100">
                     <span>Total to Pay</span>
-                    <span style={{ color: "#CC3366" }}>₦{(selectedRate ? grandTotal : Math.max(0, cart.subtotal - cart.discount)).toLocaleString()}</span>
+                    <span style={{ color: "#CC3366" }}>₦{(readyForTotals ? grandTotal : Math.max(0, cart.subtotal - cart.discount)).toLocaleString()}</span>
                   </div>
                   <button
                     onClick={handlePlaceOrder}
-                    disabled={placingOrder || cart.items.length === 0 || !selectedRate || !selectedAddress}
+                    disabled={placingOrder || cart.items.length === 0 || (!isDigitalOnly && (!selectedRate || !selectedAddress))}
                     className="w-full mt-4 flex items-center justify-center gap-2 bg-primary text-white text-sm font-semibold py-3 rounded-xl hover:bg-primary-dark disabled:opacity-50 transition-colors"
                   >
                     {placingOrder ? (
@@ -741,7 +848,7 @@ export default function CheckoutPage() {
                       "Place Order"
                     )}
                   </button>
-                  {!selectedRate && cart.items.length > 0 && (
+                  {!isDigitalOnly && !selectedRate && cart.items.length > 0 && (
                     <p className="text-xs text-gray-400 text-center mt-2">Select a shipping option to continue</p>
                   )}
                 </div>
