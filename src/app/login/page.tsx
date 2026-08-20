@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { FiMail, FiLock, FiEye, FiEyeOff, FiAlertTriangle } from "react-icons/fi";
 import { fadeUp, stagger } from "@/lib/motion";
@@ -11,7 +12,27 @@ import { Spinner } from "@/components/Spinner";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
 
+// Only accept internal paths — reject //example.com, http(s)://, and any
+// non-string. Prevents open-redirect abuse via ?next=.
+function safeNext(raw: string | null): string | null {
+  if (!raw) return null;
+  if (!raw.startsWith("/")) return null;
+  if (raw.startsWith("//")) return null;
+  if (/^\/https?:/i.test(raw)) return null;
+  return raw;
+}
+
 export default function LoginPage() {
+  // useSearchParams (used inside LoginPageInner) requires a Suspense boundary
+  // for static-rendering compatibility on Next.js 13+.
+  return (
+    <Suspense fallback={null}>
+      <LoginPageInner />
+    </Suspense>
+  );
+}
+
+function LoginPageInner() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -22,6 +43,13 @@ export default function LoginPage() {
   const { signInWithGoogle, loading: googleLoading, error: googleError } = useGoogleSignIn();
   const [activationSent, setActivationSent] = useState(false);
   const [activationLoading, setActivationLoading] = useState(false);
+
+  // Post-login redirect target — honors ?next=/some/path when present, so
+  // pages like /vendor/kyc that bounce unauth'd users through login can
+  // resume the flow after sign-in. Falls back to '/' (or the ambassador
+  // dashboard for ambassador accounts).
+  const searchParams = useSearchParams();
+  const nextPath = safeNext(searchParams?.get("next") ?? null);
 
   useEffect(() => {
     if (consumeExpiredFlag()) setSessionExpired(true);
@@ -58,7 +86,7 @@ export default function LoginPage() {
       localStorage.setItem("vendorspot_token", token);
       if (json.data?.user) localStorage.setItem("vendorspot_user", JSON.stringify(json.data.user));
       const isAmbassador = json.data?.user?.affiliateCode?.startsWith("AMB-");
-      window.location.href = isAmbassador ? "/ambassador-dashboard" : "/";
+      window.location.href = nextPath || (isAmbassador ? "/ambassador-dashboard" : "/");
     } catch {
       setError("Something went wrong. Please try again.");
     } finally {
@@ -203,7 +231,7 @@ export default function LoginPage() {
               const data = await signInWithGoogle("customer");
               if (data) {
                 const isAmbassador = data.user?.affiliateCode?.startsWith("AMB-");
-                window.location.href = isAmbassador ? "/ambassador-dashboard" : "/";
+                window.location.href = nextPath || (isAmbassador ? "/ambassador-dashboard" : "/");
               }
             }}
             className="w-full flex items-center justify-center gap-3 border border-gray-200 rounded-full py-3 text-sm font-semibold text-dark hover:bg-gray-50 transition-colors disabled:opacity-60"
