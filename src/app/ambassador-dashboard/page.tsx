@@ -11,6 +11,7 @@ import {
   FiCopy, FiCheck, FiTrendingUp, FiUsers, FiDollarSign,
   FiAward, FiExternalLink, FiShoppingBag, FiShare2, FiSmartphone,
 } from "react-icons/fi";
+import { detectOS, openAppOrStore, type OS } from "@/lib/appStore";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
 const BRAND = "#d7004b";
@@ -263,6 +264,11 @@ export default function AmbassadorDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [tab, setTab] = useState<Tab>("vendors");
+  const [os, setOs] = useState<OS>("desktop");
+
+  useEffect(() => {
+    setOs(detectOS());
+  }, []);
 
   useEffect(() => {
     const token = getToken();
@@ -429,14 +435,24 @@ export default function AmbassadorDashboard() {
           {/* Withdrawal notice */}
           <motion.div
             variants={fadeUp} initial="hidden" animate="visible" transition={{ delay: 0.1 }}
-            className="flex items-start gap-3 rounded-2xl px-5 py-4 mb-6"
+            className="flex flex-col sm:flex-row sm:items-center gap-3 rounded-2xl px-5 py-4 mb-6"
             style={{ backgroundColor: `${BRAND}0d`, border: `1px solid ${BRAND}22` }}
           >
-            <FiSmartphone className="w-4 h-4 mt-0.5 shrink-0" style={{ color: BRAND }} />
-            <p className="text-xs text-gray-600 leading-relaxed">
-              <span className="font-bold text-gray-800">Earnings can only be withdrawn from the Vendorspot mobile app.</span>{" "}
-              This website only tracks your referrals and progress — download the app to cash out your balance.
-            </p>
+            <div className="flex items-start gap-3 flex-1">
+              <FiSmartphone className="w-4 h-4 mt-0.5 shrink-0" style={{ color: BRAND }} />
+              <p className="text-xs text-gray-600 leading-relaxed">
+                <span className="font-bold text-gray-800">Earnings can only be withdrawn from the Vendorspot mobile app.</span>{" "}
+                This website only tracks your referrals and progress — download the app to cash out your balance.
+              </p>
+            </div>
+            <button
+              onClick={() => openAppOrStore(os)}
+              className="inline-flex items-center justify-center gap-2 text-white text-xs font-semibold px-4 py-2.5 rounded-xl shrink-0 transition-opacity hover:opacity-90"
+              style={{ backgroundColor: BRAND }}
+            >
+              <FiSmartphone className="w-3.5 h-3.5" />
+              {os === "ios" ? "Download on the App Store" : os === "android" ? "Get it on Google Play" : "Download the App"}
+            </button>
           </motion.div>
 
           <hr className="border-gray-200 mb-6" />

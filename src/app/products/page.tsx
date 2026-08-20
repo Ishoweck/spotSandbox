@@ -10,13 +10,14 @@ import Footer from "@/components/Footer";
 import ProductCard from "@/components/ProductCard";
 import {
   FiSearch, FiArrowRight, FiX, FiZap, FiTrendingUp, FiSmartphone,
-  FiShoppingBag, FiMonitor, FiHome, FiSliders, FiCheck,
+  FiShoppingBag, FiMonitor, FiHome, FiSliders, FiCheck, FiBox,
 } from "react-icons/fi";
 import { useApi } from "@/lib/useApi";
 import type { Product, Category } from "@/lib/api";
 import { fadeUp, stagger } from "@/lib/motion";
 
 const quickCategories = [
+  { label: "All Products", Icon: FiBox,         href: "/products/all" },
   { label: "Electronics", Icon: FiMonitor,     keywords: ["electronics"] },
   { label: "Fashion",     Icon: FiShoppingBag, keywords: ["fashion"] },
   { label: "Phones",      Icon: FiSmartphone,  keywords: ["mobile-phones"] },
@@ -393,6 +394,7 @@ function ProductsPageContent() {
   const { data: flashSales,    loading: loadingFlash   } = useApi<Product[]>(isFiltered ? null : "/products/flash-sales?limit=10");
   const { data: trending,      loading: loadingTrend   } = useApi<Product[]>(isFiltered ? null : "/products/trending?limit=10");
   const { data: digital,       loading: loadingDigital } = useApi<Product[]>(isFiltered ? null : "/products?productType=digital&limit=10");
+  const { data: allProducts,   loading: loadingAllProducts } = useApi<Product[]>(isFiltered ? null : "/products?limit=10");
 
   const clearApplied = () => { setAppliedSort(""); setAppliedCategory(""); setAppliedState(""); };
   const appliedSortLabel = SORT_OPTIONS.find(o => o.value === appliedSort)?.label ?? "Featured";
@@ -806,6 +808,7 @@ function ProductsPageContent() {
 
               <ProductSection title="Digital Products" products={digital} loading={loadingDigital} fallback={fallbackProducts} cols={5} displayLimit={10} viewAllHref="/products/digital" />
               <ProductSection title="Trending Now" icon="🔥" products={trending} loading={loadingTrend} fallback={fallbackProducts} cols={5} displayLimit={10} viewAllHref="/products/new-arrivals" />
+              <ProductSection title="All Products" icon="🛍️" products={allProducts} loading={loadingAllProducts} fallback={fallbackProducts} cols={5} displayLimit={10} viewAllHref="/products/all" />
 
               {/* View All section */}
               <section className="px-4 py-8 sm:py-12">
@@ -827,8 +830,11 @@ function ProductsPageContent() {
                       Thousands of items across every category — sorted, filtered, and ready to shop.
                     </p>
                     <div className="flex flex-wrap items-center justify-center gap-3">
-                      <Link href="/products/new-arrivals" className="inline-flex items-center gap-2 bg-primary text-white text-sm font-bold rounded-full px-6 py-3 hover:bg-primary-dark transition-colors shadow-lg">
-                        New Arrivals <FiArrowRight className="w-4 h-4" />
+                      <Link href="/products/all" className="inline-flex items-center gap-2 bg-primary text-white text-sm font-bold rounded-full px-6 py-3 hover:bg-primary-dark transition-colors shadow-lg">
+                        All Products <FiArrowRight className="w-4 h-4" />
+                      </Link>
+                      <Link href="/products/new-arrivals" className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/15 border border-white/15 text-white text-sm font-bold rounded-full px-6 py-3 transition-colors">
+                        New Arrivals
                       </Link>
                       <Link href="/products/deals" className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/15 border border-white/15 text-white text-sm font-bold rounded-full px-6 py-3 transition-colors">
                         Deals &amp; Discounts <FiZap className="w-4 h-4" />
