@@ -9,6 +9,8 @@ import { useCart } from "@/lib/CartContext";
 import { useToast } from "@/components/Toast";
 import { Spinner } from "@/components/Spinner";
 import { FiMapPin, FiTag, FiTruck, FiChevronRight, FiCheck, FiPlus, FiCreditCard, FiLoader, FiPackage, FiAlertCircle, FiShield, FiX, FiDownload } from "react-icons/fi";
+import { fbEvent } from "@/lib/fbpixel";
+import { ttqEvent } from "@/lib/ttpixel";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
 
