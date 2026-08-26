@@ -41,11 +41,15 @@ export function usePagedApi<T>(endpoint: string | null) {
         const json = await res.json();
         if (!cancelled) {
           const d = json.data as Record<string, unknown>;
+          const meta = (json.meta || {}) as Record<string, unknown>;
           const arr = (Array.isArray(d) ? d : Object.values(d).find(v => Array.isArray(v))) as T[] || [];
+          const total = (d.total as number) ?? (meta.total as number) ?? arr.length;
+          const limit = (d.limit as number) ?? (meta.limit as number) ?? arr.length;
+          const computedPages = limit > 0 ? Math.ceil(total / limit) : 1;
           setData(arr);
-          setTotal((d.total as number) || arr.length);
-          setTotalPages((d.totalPages as number) || 1);
-          setHasMore((d.hasMore as boolean) || false);
+          setTotal(total);
+          setTotalPages((meta.totalPages as number) || (d.totalPages as number) || computedPages || 1);
+          setHasMore((d.hasMore as boolean) ?? (meta.hasNextPage as boolean) ?? false);
           setError(null);
         }
       } catch (err) {
