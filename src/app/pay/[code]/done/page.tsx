@@ -17,6 +17,7 @@ interface Result {
   paid: boolean;
   reference: string;
   amount: number;
+  chargedAmount?: number | null;
   title?: string;
   vendorName?: string;
   vendorSlug?: string;
@@ -75,6 +76,8 @@ function PayDoneContent() {
   };
 
   const paidAt = result?.paidAt ? new Date(result.paidAt) : null;
+  const totalPaid = result?.chargedAmount ?? result?.amount ?? 0;
+  const processingFee = result ? Math.max(0, Math.round((totalPaid - result.amount) * 100) / 100) : 0;
   const vendor = result?.vendorName ? { businessName: result.vendorName, logo: result.vendorLogo } : null;
 
   return (
@@ -88,13 +91,17 @@ function PayDoneContent() {
             <p className="mt-1 text-sm text-gray-500">This usually takes a few seconds. Please don&apos;t close this page.</p>
           </div>
         ) : result?.paid ? (
-          <div className="overflow-hidden rounded-2xl border border-gray-200/70 bg-white print:border-gray-300">
+          <div className="overflow-hidden rounded-2xl border border-gray-200/70 bg-white print:rounded-none print:border-0">
+            <div className="hidden px-6 pt-6 sm:px-8 print:block">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/VLogo.svg" alt="Vendorspot" className="h-6 w-auto" />
+            </div>
             <div className="px-6 pt-10 pb-8 text-center sm:px-8">
               <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 ring-8 ring-emerald-50/50">
                 <FiCheck size={28} strokeWidth={3} />
               </div>
               <p className="mt-5 text-sm font-medium text-gray-500">Payment successful</p>
-              <p className="mt-1 text-4xl font-semibold tracking-tight text-gray-900">{naira(result.amount)}</p>
+              <p className="mt-1 text-4xl font-semibold tracking-tight text-gray-900">{naira(totalPaid)}</p>
               {vendor && (
                 <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-gray-50 py-1 pl-1 pr-3">
                   <VendorAvatar vendor={vendor} size={24} />
@@ -111,6 +118,9 @@ function PayDoneContent() {
 
             <dl className="space-y-3.5 px-6 py-6 text-sm sm:px-8">
               {result.title && <Row label="Payment for" value={result.title} />}
+              <Row label="Amount" value={naira(result.amount)} />
+              {processingFee > 0 && <Row label="Paystack processing fee" value={naira(processingFee)} />}
+              <Row label="Total paid" value={naira(totalPaid)} />
               {paidAt && (
                 <Row
                   label="Date"

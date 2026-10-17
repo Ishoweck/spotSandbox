@@ -31,7 +31,7 @@ import {
 import { Spinner } from "@/components/Spinner";
 import { useCart } from "@/lib/CartContext";
 import { useToast } from "@/components/Toast";
-import { PayFooter, PayTopBar, VendorAvatar, naira } from "./ui";
+import { PayFooter, PayTopBar, VendorAvatar, naira, paystackFee } from "./ui";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
 
@@ -124,6 +124,8 @@ function PaymentCheckout({ data, code }: { data: PublicLink; code: string }) {
 
   const payAmount = link.amount ?? Number(amount.replace(/,/g, ""));
   const hasAmount = Number.isFinite(payAmount) && payAmount > 0;
+  const processingFee = hasAmount ? paystackFee(payAmount) : 0;
+  const total = hasAmount ? payAmount + processingFee : 0;
 
   const handlePay = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -182,16 +184,30 @@ function PaymentCheckout({ data, code }: { data: PublicLink; code: string }) {
         </div>
 
         <div className="mt-8 rounded-xl bg-gray-50 border border-gray-100 p-5">
-          <p className="text-xs font-medium uppercase tracking-wider text-gray-400">Amount due</p>
+          <p className="text-xs font-medium uppercase tracking-wider text-gray-400">Total to pay</p>
           <p className="mt-1 text-4xl font-semibold tracking-tight text-gray-900">
-            {hasAmount ? naira(payAmount) : <span className="text-gray-300">₦0.00</span>}
+            {hasAmount ? naira(total) : <span className="text-gray-300">₦0.00</span>}
           </p>
-          {!link.amount && <p className="mt-1 text-xs text-gray-500">Enter the amount agreed with the vendor.</p>}
+          {!link.amount && !hasAmount && (
+            <p className="mt-1 text-xs text-gray-500">Enter the amount agreed with the vendor.</p>
+          )}
+          {hasAmount && (
+            <dl className="mt-4 space-y-2 border-t border-gray-200/70 pt-4 text-sm">
+              <div className="flex justify-between">
+                <dt className="text-gray-500">Amount</dt>
+                <dd className="font-medium text-gray-900">{naira(payAmount)}</dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-gray-500">Paystack processing fee</dt>
+                <dd className="font-medium text-gray-900">{naira(processingFee)}</dd>
+              </div>
+            </dl>
+          )}
         </div>
 
         <ul className="mt-8 space-y-3 text-sm text-gray-600">
           <TrustItem icon={<FiLock />} text="Payment encrypted and processed by Paystack" />
-          <TrustItem icon={<FiCheck />} text="No extra fees. You pay exactly this amount." />
+          <TrustItem icon={<FiCheck />} text="Paying a verified Vendorspot vendor" />
           <TrustItem icon={<FiMail />} text="Receipt sent to your email instantly" />
         </ul>
       </section>
@@ -245,7 +261,7 @@ function PaymentCheckout({ data, code }: { data: PublicLink; code: string }) {
             className="mt-6 w-full rounded-xl bg-primary py-3.5 text-base font-semibold text-white shadow-sm transition hover:bg-primary-dark disabled:opacity-60 flex items-center justify-center gap-2"
           >
             {submitting ? <Spinner /> : <FiLock size={16} />}
-            {submitting ? "Redirecting to secure payment..." : hasAmount ? `Pay ${naira(payAmount)}` : "Continue to payment"}
+            {submitting ? "Redirecting to secure payment..." : hasAmount ? `Pay ${naira(total)}` : "Continue to payment"}
           </button>
 
           <div className="mt-4 flex items-center justify-center gap-4 text-xs text-gray-500">

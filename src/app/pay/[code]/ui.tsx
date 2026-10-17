@@ -5,6 +5,15 @@ import { FiLock } from "react-icons/fi";
 export const naira = (n: number) =>
   `₦${Number(n || 0).toLocaleString("en-NG", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
+// Paystack passes its local-card fee on to the customer on this account:
+// 1.5% + N100 (the N100 is waived under N2,500), grossed up, capped at N2,000.
+// Matches what Paystack adds on its own checkout page, to the kobo.
+export function paystackFee(amount: number): number {
+  if (!Number.isFinite(amount) || amount <= 0) return 0;
+  const gross = amount < 2500 ? amount / 0.985 : (amount + 100) / 0.985;
+  return Math.min(Math.ceil((gross - amount) * 100) / 100, 2000);
+}
+
 export function PayTopBar() {
   return (
     <header className="border-b border-gray-200/70 bg-white print:hidden">
