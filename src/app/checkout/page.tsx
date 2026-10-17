@@ -385,11 +385,14 @@ export default function CheckoutPage() {
     try {
       // Affiliate code is stored by the product page or affiliate landing page; clear it after use
       const pendingAffiliateCode = sessionStorage.getItem("affiliateCode") || undefined;
+      // Set by /pay/[code] when the buyer came from a vendor's product checkout link
+      const pendingCheckoutLinkCode = sessionStorage.getItem("checkoutLinkCode") || undefined;
 
       const body: Record<string, unknown> = {
         paymentMethod,
         deliveryType: isDigitalOnly ? "digital" : selectedRate!.type,
         ...(pendingAffiliateCode && { affiliateCode: pendingAffiliateCode }),
+        ...(pendingCheckoutLinkCode && { checkoutLinkCode: pendingCheckoutLinkCode }),
       };
 
       if (!isDigitalOnly) {
@@ -438,6 +441,7 @@ export default function CheckoutPage() {
         const json = await res.json();
         if (json.success) {
           sessionStorage.removeItem("affiliateCode");
+          sessionStorage.removeItem("checkoutLinkCode");
           fbEvent("Purchase", {
             value: grandTotal,
             currency: "NGN",
