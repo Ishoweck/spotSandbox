@@ -59,6 +59,7 @@ export default function PaymentCallbackPage() {
         const json = await res.json();
         if (json.success) {
           sessionStorage.removeItem("affiliateCode");
+          sessionStorage.removeItem("checkoutLinkCode");
           const orderValue = json.data?.order?.totalAmount ?? json.data?.order?.total ?? 0;
           const orderItems = json.data?.order?.items?.length ?? 0;
           fbEvent("Purchase", {
