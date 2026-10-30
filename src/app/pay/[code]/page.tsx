@@ -35,6 +35,48 @@ import { PayFooter, PayTopBar, VendorAvatar, naira, paystackFee } from "./ui";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
 
+// Paystack's inline popup, so the buyer pays on top of this page (inside
+// WhatsApp / X / Instagram's in-app browser) instead of being sent off to
+// checkout.paystack.com. If the script can't load we fall back to the redirect.
+const PAYSTACK_INLINE_SRC = "https://js.paystack.co/v2/inline.js";
+
+interface PaystackPopInstance {
+  resumeTransaction: (
+    accessCode: string,
+    callbacks?: {
+      onSuccess?: (tx: { reference?: string }) => void;
+      onCancel?: () => void;
+      onError?: (err: { message?: string }) => void;
+    }
+  ) => void;
+}
+
+declare global {
+  interface Window {
+    PaystackPop?: new () => PaystackPopInstance;
+  }
+}
+
+let paystackScript: Promise<boolean> | null = null;
+const loadPaystackInline = (): Promise<boolean> => {
+  if (typeof window === "undefined") return Promise.resolve(false);
+  if (window.PaystackPop) return Promise.resolve(true);
+  if (!paystackScript) {
+    paystackScript = new Promise((resolve) => {
+      const script = document.createElement("script");
+      script.src = PAYSTACK_INLINE_SRC;
+      script.async = true;
+      script.onload = () => resolve(!!window.PaystackPop);
+      script.onerror = () => {
+        paystackScript = null; // allow a retry on the next attempt
+        resolve(false);
+      };
+      document.body.appendChild(script);
+    });
+  }
+  return paystackScript;
+};
+
 interface PublicLink {
   link: {
     code: string;
@@ -121,6 +163,12 @@ function PaymentCheckout({ data, code }: { data: PublicLink; code: string }) {
   const [note, setNote] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
+
+  // Warm the popup script while the buyer fills the form
+  useEffect(() => {
+    loadPaystackInline();
+  }, []);
 
   const payAmount = link.amount ?? Number(amount.replace(/,/g, ""));
   const hasAmount = Number.isFinite(payAmount) && payAmount > 0;
@@ -153,7 +201,22 @@ function PaymentCheckout({ data, code }: { data: PublicLink; code: string }) {
       });
       const json = await res.json();
       if (json.success && json.data?.authorization_url) {
-        window.location.href = json.data.authorization_url;
+        const { reference, access_code: accessCode, authorization_url: authUrl } = json.data;
+        if (accessCode && (await loadPaystackInline()) && window.PaystackPop) {
+          try {
+            new window.PaystackPop().resumeTransaction(accessCode, {
+              onSuccess: (tx) => router.push(`/pay/${code}/done?reference=${encodeURIComponent(tx?.reference || reference)}`),
+              onCancel: () => setSubmitting(false),
+              onError: () => {
+                window.location.href = authUrl;
+              },
+            });
+            return;
+          } catch {
+            // fall through to the redirect
+          }
+        }
+        window.location.href = authUrl;
         return;
       }
       setError(json.message || json.errors?.[0]?.msg || "Could not start the payment. Please try again.");
